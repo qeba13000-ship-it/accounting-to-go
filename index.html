@@ -3,9 +3,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Easy Books</title>
 <style>
-:root{--bg:#f4f6f7;--panel:#fff;--ink:#14262c;--mute:#5d7077;--line:#dbe3e6;--acc:#0e6b6b;--accink:#fff;--side:#12303a;--sideink:#c9dde2;--neg:#b3261e;--pos:#1b7a43;--hl:#e3f2f0;
+:root{--bg:#000000;--panel:#121212;--ink:#ffffff;--mute:#9ca3af;--line:#27272a;--acc:#ffffff;--accink:#000000;--side:#0a0a0a;--sideink:#d1d5db;--neg:#f87171;--pos:#34d399;--hl:#18181b;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a1e;--panel:#162529;--ink:#e6f0f2;--mute:#8da4ab;--line:#26393e;--acc:#3fb7b0;--accink:#06201f;--side:#0a1316;--sideink:#9fb8be;--neg:#ff8a80;--pos:#6fd69a;--hl:#1d3a3c}}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000000;--panel:#121212;--ink:#ffffff;--mute:#9ca3af;--line:#27272a;--acc:#ffffff;--accink:#000000;--side:#0a0a0a;--sideink:#d1d5db;--neg:#f87171;--pos:#34d399;--hl:#18181b;--bg:#0e1a1e;--panel:#162529;--ink:#e6f0f2;--mute:#8da4ab;--line:#26393e;--acc:#3fb7b0;--accink:#06201f;--side:#0a1316;--sideink:#9fb8be;--neg:#ff8a80;--pos:#6fd69a;--hl:#1d3a3c}}
 :root[data-theme="dark"]{--bg:#0e1a1e;--panel:#162529;--ink:#e6f0f2;--mute:#8da4ab;--line:#26393e;--acc:#3fb7b0;--accink:#06201f;--side:#0a1316;--sideink:#9fb8be;--neg:#ff8a80;--pos:#6fd69a;--hl:#1d3a3c}
 *{box-sizing:border-box}html,body{margin:0}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;min-height:100vh}
@@ -203,7 +203,16 @@ function back(){E=null;if(from)go(from);}
 function openTx(id){const j=S.je.find(x=>x.id===id);if(!j)return;const f=cur,v=docOf(j.ref);if(v){const k=v.no.startsWith('INV')?'inv':v.no.startsWith('BILL')?'bill':'cash';go(k);E={k,i:v.no}}else{go('je');E={k:'je',i:id}}from=f;render();scrollTo(0,0)}
 function render(){if(CLOUD&&(!SESS||!S)){renderLogin();return}document.querySelector('details').style.display='';const cn=CO.list.find(c=>c.id===CO.cur)||{name:''};
  $('#nav').innerHTML=`<div class="co"><h1>Easy Books</h1><select aria-label="Company" onchange="useCo(this.value)">${CO.list.map(c=>`<option value="${esc(c.id)}"${c.id===CO.cur?' selected':''}>${esc(c.name)}</option>`).join('')}</select><input aria-label="Rename this company" value="${esc(cn.name)}" onchange="renameCo(this.value)"><div class="form"><input id="nc" placeholder="New company name"><button onclick="addCo()">Add</button></div></div>`+Object.keys(T).map(k=>`<a tabindex="0" class="${k===cur?'on':''}" onclick="go('${k}')" onkeydown="if(event.key==='Enter')go('${k}')">${T[k]}</a>`).join('')+'<p id="sync" style="font-size:12px;margin:14px 8px">'+syncMsg+'</p>'+LANGP+(CLOUD&&SESS?'<p style="margin:0 8px;font-size:12px"><a style="cursor:pointer;text-decoration:underline" onclick="logout()">Sign out ('+esc(SESS.email||'')+')</a>'+(canEdit()?'':' (view only)')+'</p>':'');
- $('#title').textContent=T[cur]+' \u2014 '+cn.name;$('#main').innerHTML=(from&&E?`<p><button class="g" onclick="cancel()">\u2190 Back to ${T[from]}</button></p>`:'')+V[cur]();
+ $('#title').textContent=T[cur]+' \u2014 '+cn.name;let globalSearchQuery='';
+function renderSearch(){
+ const q=globalSearchQuery.toLowerCase();
+ document.querySelectorAll('#tab-content tr').forEach(r=>{
+  if(r.parentElement.tagName==='THEAD')return;
+  const txt=r.textContent.toLowerCase();
+  r.style.display=!q||txt.includes(q)?'':'none';
+ });
+}
+$('#main').innerHTML=`<div class="box" style="margin-bottom:12px;display:flex;gap:10px;align-items:center"><input type="text" id="global-search" placeholder="Search records, descriptions, amounts..." value="${esc(globalSearchQuery)}" oninput="globalSearchQuery=this.value;renderSearch()" style="flex:1"></div><div id="tab-content">`+(from&&E?`<p><button class="g" onclick="cancel()">\u2190 Back to ${T[from]}</button></p>`:'')+V[cur]()+`</div>`;renderSearch();
  $('#cl').innerHTML=S.con.map(c=>`<option value="${esc(c.name)}">`).join('');
  $('#pl').innerHTML=[...new Set(S.je.flatMap(j=>j.lines.map(l=>l.p).filter(Boolean)))].map(p=>`<option value="${esc(p)}">`).join('');if(!canEdit())viewOnly();if(LANG==='ms')trDom(document.body)}
 function saveDoc(kind){const D=DR,editing=E&&E.k===kind,o={party:D.party.trim(),date:D.date,due:D.due,pj:D.pj.trim(),memo:D.memo.trim(),lines:D.lines};run(()=>{if(editing){updateDoc((kind==='inv'?S.inv:S.bill).find(x=>x.no===E.i),kind,o);E=null;DR=null;if(from)go(from)}else{addDoc(kind,o);DR=null}},editing?'Changes saved':kind==='inv'?'Invoice saved':'Bill saved')}
