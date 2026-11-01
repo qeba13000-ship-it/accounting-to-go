@@ -206,10 +206,15 @@ function render(){if(CLOUD&&(!SESS||!S)){renderLogin();return}document.querySele
  $('#title').textContent=T[cur]+' \u2014 '+cn.name;let globalSearchQuery='';
 function renderSearch(){
  const q=globalSearchQuery.toLowerCase();
- document.querySelectorAll('#tab-content tr').forEach(r=>{
-  if(r.parentElement.tagName==='THEAD')return;
-  const txt=r.textContent.toLowerCase();
-  r.style.display=!q||txt.includes(q)?'':'none';
+ const content = document.getElementById('tab-content');
+ if(!content) return;
+ content.querySelectorAll('tr').forEach(r=>{
+  if(r.parentElement && r.parentElement.tagName==='THEAD') return;
+  const txt = r.textContent.toLowerCase();
+  r.style.display = !q || txt.includes(q) ? '' : 'none';
+ });
+ content.querySelectorAll('.card, h3').forEach(el=>{
+  // If user is searching on dashboard/reports, we can also filter cards if needed, but for tables this handles table filtering perfectly.
  });
 }
 $('#main').innerHTML=`<div class="box" style="margin-bottom:12px;display:flex;gap:10px;align-items:center"><input type="text" id="global-search" placeholder="Search records, descriptions, amounts..." value="${esc(globalSearchQuery)}" oninput="globalSearchQuery=this.value;renderSearch()" style="flex:1"></div><div id="tab-content">`+(from&&E?`<p><button class="g" onclick="cancel()">\u2190 Back to ${T[from]}</button></p>`:'')+V[cur]()+`</div>`;renderSearch();
