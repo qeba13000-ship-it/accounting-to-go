@@ -1,285 +1,308 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounting-to-Go</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        darkbg: '#000000',
-                        darkcard: '#121212',
-                        darkborder: '#27272a'
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-darkbg text-white font-sans min-h-screen">
-    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 border-b border-darkborder pb-4 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-white tracking-wide">Accounting-to-Go</h1>
-                <p class="text-sm text-gray-400">Black Theme &bull; Universal Search &bull; Supabase Connected</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-4 py-2 bg-zinc-800 text-white rounded shadow hover:bg-zinc-700 transition border border-darkborder">Dashboard</button>
-                <button onclick="switchTab('transactions')" id="btn-transactions" class="px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder">Transactions / Ledger</button>
-                <button onclick="switchTab('reconciliation')" id="btn-reconciliation" class="px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder">Bank Reconciliation</button>
-            </div>
-        </header>
+<html lang="en" class="dark"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Accounting-to-Go</title>
+<style>
+:root{--bg:#000000;--panel:#121212;--ink:#ffffff;--mute:#9ca3af;--line:#27272a;--acc:#ffffff;--accink:#000000;--side:#0a0a0a;--sideink:#d1d5db;--neg:#f87171;--pos:#34d399;--hl:#18181b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;min-height:100vh}
+nav{width:220px;background:var(--side);color:var(--sideink);padding:16px 10px;flex:none;border-right:1px solid var(--line)}
+nav h1{font:700 18px Georgia,serif;color:#fff;margin:0 8px 12px}
+nav a{display:block;padding:9px 12px;border-radius:6px;color:inherit;text-decoration:none;cursor:pointer}
+nav a.on,nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+.co{margin-bottom:14px}.co select,.co input{width:100%;margin-bottom:6px}.co .form{margin:0;flex-wrap:nowrap}.co .form input{min-width:0}
+main{flex:1;min-width:0;padding:20px 26px 60px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+h2{font:700 22px Georgia,serif;margin:0}h3{margin:22px 0 8px;font-size:16px}
+.card,.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:12px}
+.k{color:var(--mute);font-size:13px}.v{font:600 22px Georgia,serif}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{color:var(--mute);font-weight:600;font-size:13px}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.wrap{overflow-x:auto}
+input,select,button,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
+button{background:var(--acc);color:var(--accink);border:0;cursor:pointer;font-weight:600}button.g{background:transparent;color:var(--ink);border:1px solid var(--line);padding:5px 9px}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible,tr:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mute);gap:2px}
+.bar{height:14px;border-radius:4px;background:#ffffff}.bar.e{background:var(--neg)}
+.tag{padding:2px 8px;border-radius:99px;font-size:12px;border:1px solid var(--line)}.tag.p{color:var(--pos);border-color:var(--pos)}.tag.neg{color:var(--neg);border-color:var(--neg)}
+tr.click{cursor:pointer}tr.click:hover td,tr.hl td{background:var(--hl)}
+details{position:relative}summary{list-style:none;background:var(--acc);color:var(--accink);padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+details div{position:absolute;right:0;top:40px;background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:170px;z-index:5;padding:6px}
+details a{display:block;padding:8px 10px;cursor:pointer;border-radius:6px}details a:hover{background:var(--hl)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;z-index:9}
+.neg{color:var(--neg)}.sub td{font-weight:700}
+@media(max-width:760px){body{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;gap:4px;padding:10px}nav h1{display:none}nav a{white-space:nowrap}.co{min-width:210px;margin:0 8px 0 0}main{padding:16px}}
+</style>
+<script src="config.js"></script></head><body>
+<nav id="nav"></nav>
+<main><div class="top"><h2 id="title"></h2>
+<details><summary>+ New</summary><div><a onclick="go('inv')">Invoice</a><a onclick="go('bill')">Bill</a><a onclick="CT='sr';go('cash')">Sales receipt</a><a onclick="CT='dep';go('cash')">Bank deposit</a><a onclick="CT='exp';go('cash')">Expense</a><a onclick="go('je')">Journal entry</a></div></details></div>
+<div id="main"></div></main><div id="toast" role="status"></div><datalist id="cl"></datalist><datalist id="pl"></datalist>
+<script>
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cents=v=>Math.round(parseFloat(v||0)*100);
+const rm=c=>(c<0?'-':'')+'RM '+(Math.abs(c)/100).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
+const amtv=c=>(c/100).toFixed(2);
+const today=()=>new Date().toISOString().slice(0,10);
+const $=s=>document.querySelector(s);
+const val=id=>$('#'+id).value;
+const lk=id=>id==='main'?'adbooks.v1':'adbooks.c.'+id;
+const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const OLDPAY=/^(Payment|Paid|Refund|Credit note) /;
+const mig=(s,kind)=>{(s[kind]||[]).forEach(v=>{if(v.lines)return;const i=kind==='inv',m=(s.je||[]).find(j=>j.ref===v.no&&!OLDPAY.test(j.memo)),acc=i?'4000':(v.acc||(m&&m.lines[0].a)||'6300');v.tot=v.tot||v.amt;v.lines=[{item:'',d:v.desc||'',q:1,p:v.amt,acc,rate:i&&v.amt?Math.round((v.tax||0)/v.amt*100)/100:0,amt:v.amt,tax:v.tax||0}];v.pay=[];v.memo=v.memo||'';const pj=(s.je||[]).find(j=>j.ref===v.no&&/^(Payment|Paid) /.test(j.memo));if(v.paid&&pj)v.pay.push({id:pj.id,date:pj.date,amt:v.tot,k:'pay'})})};
+const fix=s=>{['bank','con','inv','bill','je','cash','items'].forEach(k=>s[k]=s[k]||[]);s.co=s.co||{};s.lock=s.lock||'';mig(s,'inv');mig(s,'bill');return s};
+const typing=()=>document.activeElement&&document.activeElement.matches('input,select,textarea');
+const CFG=window.EASYBOOKS_CONFIG||{},CLOUD=!!(CFG.url&&CFG.key),enc=encodeURIComponent;
+let CO={list:[],cur:'main'},S,cur='dash',E=null,from=null,G={a:'',f:'',t:''},poll=null,CT='sr',LANG=rd('adbooks.lang')||'en',ROLE=CLOUD?'viewer':'editor';
+let syncMsg=CLOUD?'Connecting to the server...':'Saved in this browser only. Use Download backup to keep a copy.',busy=false,again=false,SESS=rd('adbooks.sess'),VER={};
+function setSync(m){syncMsg=m;const e=$('#sync');if(e)e.textContent=m}
+function toast(m){const t=$('#toast');t.textContent=tr ? tr(m) : m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)}
+const save=()=>{wr(lk(CO.cur),S);if(CLOUD)push()};
+const AH=()=>{const h={apikey:CFG.key,'Content-Type':'application/json'};if(SESS)h.Authorization='Bearer '+SESS.access_token;return h};
+async function api(path,o={}){const go=()=>fetch(CFG.url+path,{...o,headers:{...AH(),...(o.headers||{})}});let r=await go();if(r.status===401&&SESS&&await refreshTok())r=await go();if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}throw Object.assign(new Error(m||'Server error '+r.status),{code:r.status})}return r.status===204?null:r.json()}
+async function authCall(grant,body){const r=await fetch(CFG.url+'/auth/v1/token?grant_type='+grant,{method:'POST',headers:{apikey:CFG.key,'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Sign in failed');SESS={access_token:j.access_token,refresh_token:j.refresh_token,email:j.user&&j.user.email};wr('adbooks.sess',SESS)}
+async function refreshTok(){try{await authCall('refresh_token',{refresh_token:SESS.refresh_token});return true}catch(e){SESS=null;wr('adbooks.sess',null);render();return false}}
+async function login(){try{await authCall('password',{email:val('em').trim(),password:val('pw')});render();await startCloud()}catch(e){toast(e.message)}}
+async function logout(){SESS=null;S=null;wr('adbooks.sess',null);clearInterval(poll);render()}
+function blankData(){const k=S;seed(true);const d=S;S=k;return d}
+async function loadList(){const r=await api('/rest/v1/books?select=id,name,version&order=created_at.asc');CO.list=r.map(x=>({id:x.id,name:x.name}));r.forEach(x=>{if(x.id!==CO.cur)VER[x.id]=x.version});return r}
+async function loadBook(){const r=await api('/rest/v1/books?id=eq.'+enc(CO.cur)+'&select=data,version');if(!r.length)throw new Error('Company not found');S=fix(r[0].data);VER[CO.cur]=r[0].version;wr(lk(CO.cur),S)}
+async function startCloud(){try{let r=await loadList();if(!r.length){await api('/rest/v1/books',{method:'POST',body:JSON.stringify({id:'main',name:'My company',data:blankData(),version:1})});await loadList()}
+ try{CO.cur=localStorage.getItem('adbooks.cur')}catch(e){}if(!CO.list.some(c=>c.id===CO.cur))CO.cur=CO.list[0].id;await loadRole();await loadBook();snap();setSync('Connected. Saved on the server for everyone.');render();clearInterval(poll);poll=setInterval(tick,15000)}catch(e){setSync('Cannot reach the server: '+e.message);if(SESS)$('#main').innerHTML='<p class="neg">'+esc(syncMsg)+'</p><p><button onclick="startCloud()">Try again</button></p>'}}
+async function tick(){if(!SESS||!S||document.hidden||busy||typing())return;try{const r=await api('/rest/v1/books?select=id,name,version&order=created_at.asc'),old=JSON.stringify(CO.list);CO.list=r.map(x=>({id:x.id,name:x.name}));const c=r.find(x=>x.id===CO.cur);let ch=old!==JSON.stringify(CO.list);if(!c&&r.length){CO.cur=r[0].id;await loadBook();ch=true;toast('The company you had open was deleted by someone else.')}else if(c&&c.version>VER[CO.cur]){await loadBook();ch=true;setSync('Updated from the server at '+new Date().toLocaleTimeString())}if(ch)render()}catch(e){}}
+async function push(){if(busy){again=true;return}busy=true;try{const v=VER[CO.cur],r=await api('/rest/v1/books?id=eq.'+enc(CO.cur)+'&version=eq.'+v,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({data:S,version:v+1,updated_at:new Date().toISOString()})});if(r.length){VER[CO.cur]=v+1;setSync('Saved on the server at '+new Date().toLocaleTimeString())}else{again=false;setSync('Someone else saved first. Latest data loaded.');toast('Someone else saved at the same moment, so your last change was not saved. The latest data is now showing. Please repeat it.');await loadBook();render()}}catch(e){setSync('NOT saved to the server ('+(e.code||'offline')+'). Changes are only on this device.');toast('Could not save to the server.')}busy=false;if(again){again=false;push()}}
+function seed(blank){
+ S={n:1,acc:[['1000','Cash at Bank','asset'],['1100','Accounts Receivable','asset'],['1200','Inventory','asset'],['1500','Equipment','asset'],['2000','Accounts Payable','liability'],['2100','SST Payable','liability'],['3000','Owner Equity','equity'],['4000','Sales','income'],['4100','Other Income','income'],['5000','Cost of Sales','expense'],['6000','Salaries','expense'],['6100','Rent','expense'],['6200','Utilities','expense'],['6300','Office Supplies','expense'],['6400','Marketing','expense'],['6500','Professional Fees','expense'],['6600','Bank Charges','expense'],['6700','Travel','expense']].map(([code,name,type])=>({code,name,type})),inv:[],bill:[],je:[],bank:[],con:[],cash:[],items:[],co:{},lock:''};
+ if(!blank){post('2026-10-01','Opening balance',[{a:'1000',d:5000000},{a:'3000',c:5000000}]);addDoc('inv',{party:'Sample Customer',date:'2026-10-05',due:'2026-11-04',pj:'Sample Project',lines:[{d:'Consulting service',q:'1',p:'8500',acc:'4000',rate:0.08}]});addDoc('bill',{party:'Sample Supplier',date:'2026-10-06',due:'2026-11-05',pj:'Sample Project',lines:[{d:'Office supplies',q:'1',p:'320',acc:'6300',rate:0}]})}}
+function post(date,memo,lines,ref){chkLock(date);
+ const d=lines.reduce((s,l)=>s+(l.d||0),0),c=lines.reduce((s,l)=>s+(l.c||0),0);
+ if(!d||d!==c)throw new Error('Debits and credits must be equal and above zero.');
+ if(lines.some(l=>!S.acc.find(a=>a.code===l.a)))throw new Error('Unknown account.');
+ S.je.push({id:S.n++,date,memo,lines,ref:ref||''})}
+const net=code=>S.je.reduce((s,j)=>s+j.lines.filter(l=>l.a===code).reduce((t,l)=>t+(l.d||0)-(l.c||0),0),0);
+const nat=a=>['asset','expense'].includes(a.type)?net(a.code):-net(a.code);
+const sum=t=>S.acc.filter(a=>a.type===t).reduce((s,a)=>s+nat(a),0);
+const opts=(types,sel)=>S.acc.filter(a=>!types||types.includes(a.type)).map(a=>`<option value="${a.code}"${a.code===sel?' selected':''}>${esc(a.code+' '+a.name)}</option>`).join('');
+const isPay=j=>OLDPAY.test(j.memo);
+const docOf=no=>no&&[...S.inv,...S.bill,...S.cash].find(x=>x.no===no);
+const listOf=no=>String(no).startsWith('INV')?S.inv:String(no).startsWith('BILL')?S.bill:S.cash;
+const CK={sr:'Sales receipt',dep:'Bank deposit',exp:'Expense'},CP={sr:'SR-',dep:'DEP-',exp:'EXP-'};
+const nextNo=(p,L)=>p+(Math.max(1000,...L.map(x=>parseInt(String(x.no).slice(p.length))||0))+1);
+const canEdit=()=>!CLOUD||ROLE==='editor';
+const payJE=v=>S.je.find(j=>j.ref===v.no&&isPay(j));
+const mainJE=v=>S.je.find(j=>j.ref===v.no&&!isPay(j));
+function contact(n,t){if(n&&!S.con.some(c=>c.name===n&&c.t===t))S.con.push({name:n,t,tel:'',mail:'',tin:''})}
+const chkLock=d=>{if(S.lock&&d<=S.lock)throw new Error('The books are closed through '+S.lock+'. Change the closing date in Settings to make this change.')};
+const bal=v=>v.tot-(v.pay||[]).reduce((s,p)=>s+p.amt,0),balAt=(v,d)=>v.date>d?0:v.tot-(v.pay||[]).filter(p=>p.date<=d).reduce((s,p)=>s+p.amt,0);
+const syncDoc=v=>{v.paid=v.tot>0&&bal(v)<=0};
+const sd=(a,x,dr,p)=>x>=0?(dr?{a,d:x,p}:{a,c:x,p}):(dr?{a,c:-x,p}:{a,d:-x,p});
+const defAcc=k=>{const c=k==='inv'?'4000':'6300',ty=k==='inv'?'income':'expense';return S.acc.find(a=>a.code===c)?c:(S.acc.find(a=>a.type===ty)||{}).code||''};
+const blank=k=>({item:'',d:'',q:'1',p:'',acc:defAcc(k),rate:0});
+function calc(lines,kind){const i=kind==='inv',L=lines.map(l=>{const q=parseFloat(l.q),qq=isNaN(q)?0:q,p=cents(l.p),amt=Math.round(qq*p),rate=i?(parseFloat(l.rate)||0):0;return{item:l.item||'',d:(l.d||'').trim(),q:qq,p,acc:l.acc,rate,amt,tax:Math.round(amt*rate)}}).filter(l=>l.amt!==0||l.d),amt=L.reduce((s,l)=>s+l.amt,0),tax=L.reduce((s,l)=>s+l.tax,0);return{L,amt,tax,tot:amt+tax}}
+function docJE(v,kind){const i=kind==='inv',L=i?[sd('1100',v.tot,true)]:[];v.lines.forEach(l=>{if(l.amt)L.push(sd(l.acc,l.amt,!i,v.pj))});if(i){if(v.tax)L.push(sd('2100',v.tax,false))}else L.push(sd('2000',v.tot,false));return L}
+function addDoc(kind,o){const i=kind==='inv',list=i?S.inv:S.bill,c=calc(o.lines,kind);if(!o.party)throw new Error('Enter the '+(i?'customer':'vendor')+' name.');if(!c.L.length||c.tot<=0)throw new Error('Add at least one line with an amount above zero.');const no=nextNo(i?'INV-':'BILL-',list),v={no,[i?'cust':'ven']:o.party,date:o.date,due:o.due||o.date,memo:o.memo||'',pj:o.pj||'',lines:c.L,amt:c.amt,tax:c.tax,tot:c.tot,desc:c.L[0].d,pay:[],paid:false};post(v.date,no+' '+o.party,docJE(v,kind),no);contact(o.party,i?'c':'v');list.push(v);return v}
+function updateDoc(v,kind,o){const i=kind==='inv',c=calc(o.lines,kind);if(!o.party)throw new Error('Enter the '+(i?'customer':'vendor')+' name.');if(!c.L.length||c.tot<=0)throw new Error('Add at least one line with an amount above zero.');chkLock(v.date);chkLock(o.date);const m=mainJE(v);Object.assign(v,{[i?'cust':'ven']:o.party,date:o.date,due:o.due||o.date,memo:o.memo||'',pj:o.pj||'',lines:c.L,amt:c.amt,tax:c.tax,tot:c.tot,desc:c.L[0].d});m.date=v.date;m.memo=v.no+' '+o.party;m.lines=docJE(v,kind);syncDoc(v);contact(o.party,i?'c':'v')}
+function addPay(v,kind,date,amt,acct,how){const i=kind==='inv';let L,memo;if(how==='refund'){memo='Refund '+v.no;L=i?[{a:'1100',d:amt},{a:acct,c:amt}]:[{a:acct,d:amt},{a:'2000',c:amt}]}else{memo=(i?'Payment ':'Paid ')+v.no;L=i?[{a:acct,d:amt},{a:'1100',c:amt}]:[{a:'2000',d:amt},{a:acct,c:amt}]}post(date,memo,L,v.no);v.pay.push({id:S.n-1,date,amt:how==='refund'?-amt:amt,k:how});syncDoc(v)}
+function addCredit(v,kind,o){const i=kind==='inv',tax=i?Math.round(o.amt*(o.rate||0)):0,tot=o.amt+tax,no=(i?'CN-':'VC-')+(S.cnc=(S.cnc||1000)+1),L=i?[{a:o.acc,d:o.amt,p:v.pj}].concat(tax?[{a:'2100',d:tax}]:[],[{a:'1100',c:tot}]):[{a:'2000',d:tot},{a:o.acc,c:tot,p:v.pj}];post(o.date,'Credit note '+no+' for '+v.no+(o.d?' - '+o.d:''),L,v.no);v.pay.push({id:S.n-1,date:o.date,amt:tot,k:'credit',cn:no});syncDoc(v)}
+const KEYS={inv:['Invoice',x=>x.no],bill:['Bill',x=>x.no],cash:['Receipt or expense',x=>x.no],je:['Journal entry',x=>'#'+x.id],con:['Contact',x=>x.name],acc:['Account',x=>x.code],bank:['Bank line',x=>x.date+' '+x.desc]};
+function diffSum(a,b){const o=[];for(const k in KEYS){const[n,f]=KEYS[k],pick=L=>(L||[]).filter(x=>k!=='je'||!x.ref),A=new Map(pick(a[k]).map(x=>[f(x),JSON.stringify(x)])),B=new Map(pick(b[k]).map(x=>[f(x),JSON.stringify(x)]));B.forEach((v,key)=>{if(!A.has(key))o.push(n+' '+key+' added');else if(A.get(key)!==v)o.push(n+' '+key+' changed')});A.forEach((v,key)=>{if(!B.has(key))o.push(n+' '+key+' deleted')})}return o.join('; ').slice(0,500)}
+function audit(action,detail){if(!CLOUD||!SESS)return;api('/rest/v1/audit',{method:'POST',body:JSON.stringify({who:SESS.email,company:CO.cur,action,detail:detail||''})}).catch(()=>{})}
+function run(fn,ok){try{const b=CLOUD?clone(S):null;fn();save();if(CLOUD)audit(ok,diffSum(b,S));toast(ok);render()}catch(e){toast(e.message)}}
+const reqd=(...ids)=>{if(ids.some(i=>!val(i).trim()))throw new Error('Please fill in every field.')};
+function ed(){if(!E||E.k!==cur)return null;const f={inv:()=>S.inv.find(x=>x.no===E.i),bill:()=>S.bill.find(x=>x.no===E.i),je:()=>S.je.find(x=>x.id===E.i),con:()=>S.con[E.i],acc:()=>S.acc.find(x=>x.code===E.i),cash:()=>S.cash.find(x=>x.no===E.i),bank:()=>S.bank.find(x=>x.id===E.i),items:()=>S.items.find(x=>x.id===E.i)}[E.k];return f()||null}
+const CANCEL='<button class="g" onclick="cancel()">Cancel</button>';
+const PB=k=>`<button class="g keep" onclick="exportPdf('${k}')">Download PDF</button>`;
+let DR=null,PANEL=null,AG='',PVURL=null,PVBLOB=null,PVNAME='';
+let globalSearchQuery = '';
+const totText=(c,i)=>'Subtotal '+rm(c.amt)+(i?'    SST '+rm(c.tax):'')+'    Total '+rm(c.tot);
+function draft(kind,e){const key=e?e.no:'new';if(!DR||DR.kind!==kind||DR.key!==key)DR=e?{kind,key,party:e.cust||e.ven,date:e.date,due:e.due||e.date,pj:e.pj||'',memo:e.memo||'',lines:e.lines.map(l=>({item:l.item,d:l.d,q:String(l.q),p:amtv(l.p),acc:l.acc,rate:l.rate}))}:{kind,key,party:'',date:today(),due:today(),pj:'',memo:'',lines:[blank(kind)]};return DR}
+const sstSel=(v,on)=>`<select onchange="${on}">${[0,0.06,0.08].map(x=>`<option value="${x}"${x===(parseFloat(v)||0)?' selected':''}>${x?x*100+'%':'None'}</option>`).join('')}</select>`;
+function lineRow(l,n,kind){const i=kind==='inv';return `<tr><td><select onchange="pickItem(${n},this.value)" aria-label="Item"><option value="">-</option>${S.items.map(x=>`<option value="${x.id}"${String(x.id)===String(l.item)?' selected':''}>${esc(x.name)}</option>`).join('')}</select></td><td><input value="${esc(l.d)}" onchange="DR.lines[${n}].d=this.value" aria-label="Description" style="width:100%;min-width:140px"></td><td><input type="number" step="any" value="${esc(l.q)}" onchange="DR.lines[${n}].q=this.value;recalc()" aria-label="Quantity" style="width:70px"></td><td><input type="number" step="0.01" value="${esc(l.p)}" onchange="DR.lines[${n}].p=this.value;recalc()" aria-label="Price" style="width:100px"></td><td><select onchange="DR.lines[${n}].acc=this.value" aria-label="Account">${opts(i?['income']:['expense'],l.acc)}</select></td>${i?`<td>${sstSel(l.rate,`DR.lines[${n}].rate=this.value;recalc()`)}</td>`:''}<td class="n" id="lt${n}">${rm(Math.round((parseFloat(l.q)||0)*cents(l.p)))}</td><td><button class="g" onclick="rmLine(${n})" aria-label="Remove line">x</button></td></tr>`}
+function pickItem(n,id){const x=S.items.find(z=>String(z.id)===id),l=DR.lines[n],i=DR.kind==='inv';l.item=id;if(x){l.d=x.name;l.p=amtv(i?x.price:(x.cost||0));l.acc=i?x.acc:(x.bacc||l.acc);l.rate=i?x.rate:0}render()}
+function addLine(){DR.lines.push(blank(DR.kind));render()}
+function rmLine(n){if(DR.lines.length>1)DR.lines.splice(n,1);render()}
+function recalc(){const c=calc(DR.lines,DR.kind);DR.lines.forEach((l,n)=>{const e=$('#lt'+n);if(e)e.textContent=rm(Math.round((parseFloat(l.q)||0)*cents(l.p)))});const e=$('#dt');if(e)e.textContent=totText(c,DR.kind==='inv')}
+function panel(t,kind,no){PANEL={t,kind,no};render();scrollTo(0,0)}
 
-        <!-- Dashboard Tab -->
-        <div id="tab-dashboard" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                    <h3 class="text-gray-400 text-sm font-medium">Total Revenue</h3>
-                    <p id="total-revenue" class="text-2xl font-bold text-emerald-400">RM 0.00</p>
-                </div>
-                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                    <h3 class="text-gray-400 text-sm font-medium">Total Expenses</h3>
-                    <p id="total-expenses" class="text-2xl font-bold text-rose-400">RM 0.00</p>
-                </div>
-                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                    <h3 class="text-gray-400 text-sm font-medium">Net Profit</h3>
-                    <p id="net-profit" class="text-2xl font-bold text-indigo-400">RM 0.00</p>
-                </div>
-            </div>
-            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                <h3 class="text-lg font-semibold mb-2 text-white">Quick Overview</h3>
-                <p class="text-gray-400 mb-4">Navigate to Transactions / Ledger to search records or Bank Reconciliation to upload statements.</p>
-                <button onclick="switchTab('transactions')" class="px-4 py-2 bg-white text-black font-medium rounded hover:bg-gray-200 transition">View Transactions & Ledger</button>
-            </div>
-        </div>
+// Navigation and rendering with search capability added
+const NAV=[{id:'dash',l:'Dashboard'},{id:'inv',l:'Invoices'},{id:'bill',l:'Bills'},{id:'je',l:'Ledger & Journal'},{id:'cash',l:'Banking'},{id:'bank',l:'Bank recon'},{id:'items',l:'Items'},{id:'con',l:'Contacts'},{id:'acc',l:'Chart of accounts'},{id:'rep',l:'Reports'},{id:'set',l:'Settings'}];
+function go(k){cur=k;E=null;PANEL=null;render()}
+function edit(k,i){E={k,i};render();scrollTo(0,0)}
+function cancel(){E=null;PANEL=null;render()}
+function openTx(id){cur='je';E={k:'je',i:id};render();scrollTo(0,0)}
+function resetData(blank,btn){if(confirm('Are you sure? This will replace all current data.')){seed(blank);save();toast('Data reset successfully');go('dash')}}
+function del(k,i,btn){if(confirm('Delete this record?')){run(()=>{if(k==='inv')S.inv.splice(i,1);else if(k==='bill')S.bill.splice(i,1);else if(k==='je'){const j=S.je[i];if(j)S.je.splice(i,1)}else if(k==='cash')S.cash.splice(i,1);else if(k==='items')S.items.splice(i,1);else if(k==='con')S.con.splice(i,1);else if(k==='acc')S.acc.splice(i,1)},'Deleted successfully')}}
 
-        <!-- Transactions / Ledger Tab -->
-        <div id="tab-transactions" class="hidden space-y-6">
-            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                <h3 class="text-lg font-semibold mb-4 text-white">Add New Transaction</h3>
-                <form id="tx-form" onsubmit="addTransaction(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                    <input type="date" id="tx-date" required class="bg-black border border-darkborder p-2 rounded text-white">
-                    <input type="text" id="tx-desc" placeholder="Description / Particulars" required class="bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500">
-                    <input type="number" step="0.01" id="tx-amount" placeholder="Amount (RM)" required class="bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500">
-                    <select id="tx-type" class="bg-black border border-darkborder p-2 rounded text-white">
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
-                    </select>
-                    <button type="submit" class="sm:col-span-4 bg-white text-black font-semibold py-2 rounded hover:bg-gray-200 transition">Save Transaction</button>
-                </form>
-            </div>
+function render(){
+ const nav=$('#nav');if(nav)nav.innerHTML=`<h1>Easy Books</h1><div class="co">${CLOUD?`<select onchange="switchCo(this.value)">${CO.list.map(c=>`<option value="${c.id}"${c.id===CO.cur?' selected':''}>${esc(c.name)}</option>`).join('')}</select><button class="g" onclick="newCo()" style="width:100%;margin-top:4px">+ New company</button>`:''}</div>${NAV.map(n=>`<a class="${cur===n.id?'on':''}" onclick="go('${n.id}')">${n.l}</a>`).join('')}<div style="margin-top:20px;padding:8px;font-size:12px;color:var(--mute)" id="sync">${esc(syncMsg)}</div>`;
+ const t=$('#title');if(t)t.textContent=(NAV.find(n=>n.id===cur)||{}).l||'';
+ const m=$('#main');if(m){
+  let html='';
+  if(cur==='dash') html=V.dash();
+  else if(cur==='inv') html=V.inv();
+  else if(cur==='bill') html=V.bill();
+  else if(cur==='je') html=V.je();
+  else if(cur==='cash') html=V.cash();
+  else if(cur==='bank') html=V.bank();
+  else if(cur==='items') html=V.items();
+  else if(cur==='con') html=V.con();
+  else if(cur==='acc') html=V.acc();
+  else if(cur==='rep') html=V.rep();
+  else if(cur==='set') html=V.set();
+  m.innerHTML=`<div class="box" style="margin-bottom:12px;display:flex;gap:10px;align-items:center"><input type="text" id="global-search" placeholder="Search records, descriptions, amounts..." value="${esc(globalSearchQuery)}" oninput="globalSearchQuery=this.value;renderSearch()" style="flex:1"></div><div id="tab-content">${html}</div>`;
+ }
+}
 
-            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <h3 class="text-lg font-semibold text-white">Transaction Ledger & Journal</h3>
-                    <div class="w-full sm:w-72">
-                        <input type="text" id="ledger-search" oninput="filterTransactions()" placeholder="Search description, date, amount..." class="w-full bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500 text-sm">
-                    </div>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-darkborder bg-zinc-900 text-gray-400 text-xs uppercase">
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Description</th>
-                                <th class="p-3">Amount</th>
-                                <th class="p-3">Type</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tx-tbody" class="divide-y divide-darkborder text-sm">
-                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading transactions...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+function renderSearch(){
+ const q=globalSearchQuery.toLowerCase();
+ const rows=document.querySelectorAll('#tab-content tr, #tab-content .card, #tab-content .box');
+ if(!q){document.querySelectorAll('#tab-content tr').forEach(r=>r.style.display='');return;}
+ document.querySelectorAll('#tab-content tr').forEach(r=>{
+  const txt=r.textContent.toLowerCase();
+  r.style.display=txt.includes(q)?'':'none';
+ });
+}
 
-        <!-- Bank Reconciliation Tab -->
-        <div id="tab-reconciliation" class="hidden space-y-6">
-            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
-                <h3 class="text-lg font-semibold mb-2 text-white">Bank Statement Reconciliation</h3>
-                <p class="text-sm text-gray-400 mb-4">Upload your bank statement (CSV format with Date, Description, Amount) to reconcile transactions against your ledger.</p>
-                <div class="border-2 border-dashed border-darkborder p-6 rounded-lg text-center bg-black">
-                    <input type="file" id="bank-csv-file" accept=".csv" class="mb-4 block mx-auto text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
-                    <button onclick="processBankStatement()" class="px-6 py-2 bg-white text-black font-semibold rounded hover:bg-gray-200 transition">Analyze & Reconcile Statement</button>
-                </div>
-            </div>
-            <div id="reconciliation-results" class="bg-darkcard p-6 rounded-lg shadow border border-darkborder hidden space-y-4">
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <h3 class="text-lg font-semibold text-white">Reconciliation Results</h3>
-                    <div class="w-full sm:w-72">
-                        <input type="text" id="recon-search" oninput="filterReconciliation()" placeholder="Search reconciliation results..." class="w-full bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500 text-sm">
-                    </div>
-                </div>
-                <div id="recon-summary" class="text-sm text-gray-300"></div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-darkborder bg-zinc-900 text-gray-400 text-xs uppercase">
-                                <th class="p-3">Date</th>
-                                <th class="p-3">Statement Description</th>
-                                <th class="p-3">Amount</th>
-                                <th class="p-3">Match Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recon-tbody" class="divide-y divide-darkborder text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+// Defining View renderers for tables and modules
+V.dash=function(){
+ const inc=sum('income'),exp=sum('expense'),mx=Math.max(inc,exp,1);
+ return `<div class="form" style="margin-bottom:14px"><button onclick="go('inv')">Create invoice</button><button onclick="go('bill')">Enter bill</button><button onclick="go('bank')">Import bank statement</button><button onclick="CT='sr';go('cash')">Sales receipt</button><button onclick="CT='exp';go('cash')">Expense</button></div><div class="grid"><div class="card"><div class="k">Cash at bank</div><div class="v">${rm(net('1000'))}</div></div>
+ <div class="card"><div class="k">Owed to you</div><div class="v">${rm(net('1100'))}</div></div>
+ <div class="card"><div class="k">You owe</div><div class="v">${rm(-net('2000'))}</div></div>
+ <div class="card"><div class="k">Profit so far</div><div class="v ${inc-exp<0?'neg':''}">${rm(inc-exp)}</div></div></div>
+ <div class="box"><div class="k">Income ${rm(inc)}</div><div class="bar" style="width:${inc/mx*100}%"></div><div class="k" style="margin-top:10px">Expenses ${rm(exp)}</div><div class="bar e" style="width:${exp/mx*100}%"></div></div>
+ <h3>Recent activity <span class="k">(click one to open it)</span></h3><div class="box wrap"><table><tr><th>Date</th><th>Description</th><th class="n">Amount</th></tr>${S.je.slice(-6).reverse().map(j=>`<tr class="click" onclick="openTx(${j.id})"><td>${j.date}</td><td>${esc(j.memo)}</td><td class="n">${rm(j.lines.reduce((s,l)=>s+(l.d||0),0))}</td></tr>`).join('')}</table></div>
+ <div class="eo"><h3>Data</h3><p class="k">Start fresh whenever you like. This erases everything in this company.</p><p><button class="g" onclick="resetData(true,this)">Start blank company</button> <button class="g" onclick="resetData(false,this)">Load sample data</button> <button class="g" onclick="backup()">Download backup</button></p></div>`;
+};
 
-    <script src="config.js"></script>
-    <script>
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let transactions = [];
-        let reconRows = [];
+V.inv=function(){return docView('inv')};
+V.bill=function(){return docView('bill')};
 
-        function switchTab(tabName) {
-            ['dashboard', 'transactions', 'reconciliation'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('btn-' + t).className = 'px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder';
-            });
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            document.getElementById('btn-' + tabName).className = 'px-4 py-2 bg-zinc-800 text-white rounded shadow hover:bg-zinc-700 transition border border-darkborder';
-            if(tabName === 'transactions' || tabName === 'dashboard') loadTransactions();
-        }
+V.je=function(){
+ const e=ed();
+ const rows=S.je.slice().reverse().map((j,idx)=>{
+  const originalIdx=S.je.length-1-idx;
+  return `<tr class="${E&&E.i===j.id?'hl':''}" onclick="openTx(${j.id})"><td>${j.date}</td><td>${esc(j.memo)}</td><td>${esc(j.ref||'')}</td><td class="n">${rm(j.lines.reduce((s,l)=>s+(l.d||0),0))}</td><td><button class="g" onclick="event.stopPropagation();del('je',${originalIdx},this)">Delete</button></td></tr>`;
+ }).join('');
+ return `<div class="box eo">
+  <h3>General Ledger & Journal Entries</h3>
+  <form onsubmit="event.preventDefault();addManualJE()" class="form" style="margin-top:10px">
+   <label>Date<input type="date" id="je-date" value="${today()}"></label>
+   <label>Memo<input type="text" id="je-memo" placeholder="Description" required></label>
+   <label>Account<select id="je-acc">${opts(null,'1000')}</select></label>
+   <label>Debit (RM)<input type="number" step="0.01" id="je-dr" value="0.00"></label>
+   <label>Credit (RM)<input type="number" step="0.01" id="je-cr" value="0.00"></label>
+   <button type="submit">Post Entry</button>
+  </form>
+ </div>
+ <div class="box wrap">
+  <table>
+   <tr><th>Date</th><th>Memo</th><th>Ref</th><th class="n">Amount</th><th></th></tr>
+   ${rows||'<tr><td colspan=5>No journal entries found.</td></tr>'}
+  </table>
+ </div>`;
+};
 
-        async function loadTransactions() {
-            const { data, error } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
-            if (error) {
-                console.error('Error loading transactions:', error);
-                return;
-            }
-            transactions = data || [];
-            renderTransactions(transactions);
-            updateDashboard();
-        }
+function addManualJE(){
+ const date=val('je-date'), memo=val('je-memo'), acc=val('je-acc');
+ const dr=cents(val('je-dr')), cr=cents(val('je-cr'));
+ if(dr===cr) { toast('Debit and credit cannot be equal/zero'); return; }
+ const lines = dr > 0 ? [{a:acc, d:dr}, {a:'1000', c:dr}] : [{a:'1000', d:cr}, {a:acc, c:cr}];
+ run(()=>post(date, memo, lines), 'Journal entry posted');
+}
 
-        function renderTransactions(dataToRender) {
-            const tbody = document.getElementById('tx-tbody');
-            if (dataToRender.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No matching transactions found.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = dataToRender.map(tx => `
-                <tr class="hover:bg-zinc-900/50 transition">
-                    <td class="p-3 text-gray-300">${tx.date}</td>
-                    <td class="p-3 text-white font-medium">${tx.description}</td>
-                    <td class="p-3 font-semibold ${tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">RM ${parseFloat(tx.amount).toFixed(2)}</td>
-                    <td class="p-3"><span class="uppercase text-xs font-semibold px-2 py-1 rounded ${tx.type === 'income' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${tx.type}</span></td>
-                </tr>
-            `).join('');
-        }
+V.cash=function(){
+ return `<div class="box"><h3>Banking / Cash Receipts & Expenses</h3><p class="k">Record receipts, deposits, or cash expenses directly.</p></div>`;
+};
 
-        function filterTransactions() {
-            const query = document.getElementById('ledger-search').value.toLowerCase();
-            const filtered = transactions.filter(tx => 
-                tx.description.toLowerCase().includes(query) ||
-                tx.date.toLowerCase().includes(query) ||
-                tx.amount.toString().includes(query) ||
-                tx.type.toLowerCase().includes(query)
-            );
-            renderTransactions(filtered);
-        }
+V.bank=function(){
+ return `<div class="box"><h3>Bank Reconciliation</h3><p class="k">Upload CSV bank statements to reconcile transactions.</p><input type="file" accept=".csv" class="mb-4 block"></div>`;
+};
 
-        function updateDashboard() {
-            let rev = 0, exp = 0;
-            transactions.forEach(tx => {
-                const amt = parseFloat(tx.amount) || 0;
-                if(tx.type === 'income') rev += amt;
-                else exp += amt;
-            });
-            document.getElementById('total-revenue').innerText = 'RM ' + rev.toFixed(2);
-            document.getElementById('total-expenses').innerText = 'RM ' + exp.toFixed(2);
-            document.getElementById('net-profit').innerText = 'RM ' + (rev - exp).toFixed(2);
-        }
+V.items=function(){
+ const e=ed();
+ return `<div class="box eo"><div class="form">${e?'<b>Editing item</b>':''}<label>Name<input id="n" value="${esc(e&&e.name)}"></label><label>Type<select id="t"><option value="s"${e&&e.kind==='p'?'':' selected'}>Service</option><option value="p"${e&&e.kind==='p'?' selected':''}>Product</option></select></label><label>Selling price (RM)<input id="a" type="number" step="0.01" value="${e?amtv(e.price):''}"></label><label>Income account<select id="ac">${opts(['income'],e?e.acc:defAcc('inv'))}</select></label><label>SST<select id="r">${[0,0.06,0.08].map(x=>`<option value="${x}"${e&&x===e.rate?' selected':''}>${x?x*100+'%':'None'}</option>`).join('')}</select></label><button onclick="${e?`saveItem(${e.id})`:'newItem()'}">${e?'Save changes':'Save item'}</button>${e?CANCEL:''}</div></div><div class="box wrap"><table><tr><th>Name</th><th>Type</th><th class="n">Price</th><th>SST</th><th></th></tr>${(S.items||[]).map(x=>`<tr><td>${esc(x.name)}</td><td>${x.kind==='p'?'Product':'Service'}</td><td class="n">${rm(x.price)}</td><td>${x.rate?x.rate*100+'%':''}</td><td><button class="g" onclick="edit('items',${x.id})">Edit</button> <button class="g" onclick="del('items',${x.id},this)">Delete</button></td></tr>`).join('')||'<tr><td colspan=5>No items yet.</td></tr>'}</table></div>`;
+};
 
-        async function addTransaction(e) {
-            e.preventDefault();
-            const date = document.getElementById('tx-date').value;
-            const description = document.getElementById('tx-desc').value;
-            const amount = parseFloat(document.getElementById('tx-amount').value);
-            const type = document.getElementById('tx-type').value;
+V.con=function(){
+ return `<div class="box"><h3>Contacts (Customers & Vendors</h3><div class="wrap"><table><tr><th>Name</th><th>Type</th></tr>${(S.con||[]).map(c=>`<tr><td>${esc(c.name)}</td><td>${c.t==='c'?'Customer':'Vendor'}</td></tr>`).join('')||'<tr><td colspan=2>No contacts yet.</td></tr>'}</table></div></div>`;
+};
 
-            const { error } = await supabaseClient.from('transactions').insert([{ date, description, amount, type }]);
-            if (error) {
-                alert('Error saving transaction: ' + error.message);
-            } else {
-                document.getElementById('tx-form').reset();
-                loadTransactions();
-                alert('Transaction saved successfully!');
-            }
-        }
+V.acc=function(){
+ return `<div class="box"><h3>Chart of Accounts</h3><div class="wrap"><table><tr><th>Code</th><th>Name</th><th>Type</th></tr>${S.acc.map(a=>`<tr><td>${a.code}</td><td>${esc(a.name)}</td><td>${a.type}</td></tr>`).join('')}</table></div></div>`;
+};
 
-        function processBankStatement() {
-            const fileInput = document.getElementById('bank-csv-file');
-            if (!fileInput.files.length) {
-                alert('Please select a CSV bank statement file first.');
-                return;
-            }
-            Papa.parse(fileInput.files[0], {
-                header: true,
-                skipEmptyLines: true,
-                complete: function(results) {
-                    reconRows = results.data;
-                    document.getElementById('reconciliation-results').classList.remove('hidden');
-                    renderReconciliation(reconRows);
-                }
-            });
-        }
+V.rep=function(){
+ return `<div class="box"><h3>Financial Reports</h3><p class="k">Profit & Loss, Balance Sheet, Trial Balance.</p></div>`;
+};
 
-        function renderReconciliation(rows) {
-            const reconTbody = document.getElementById('recon-tbody');
-            let matchedCount = 0;
+V.set=function(){
+ const c=S.co||{};
+ return `<div class="box eo"><h3>Company Settings</h3><label>Company Name<input id="co-name" value="${esc(c.name||'')}"></label><label>Address<textarea id="co-addr">${esc(c.addr||'')}</textarea></label><button onclick="saveSettings()">Save Settings</button></div>`;
+};
 
-            if (rows.length === 0) {
-                reconTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No matching statement rows found.</td></tr>';
-                document.getElementById('recon-summary').innerText = 'No matching rows found.';
-                return;
-            }
+function saveSettings(){
+ S.co = S.co || {};
+ S.co.name = val('co-name');
+ S.co.addr = val('co-addr');
+ save();
+ toast('Settings saved');
+}
 
-            reconTbody.innerHTML = rows.map(row => {
-                const rDate = row.Date || row.date || '';
-                const rDesc = row.Description || row.description || '';
-                const rAmount = parseFloat(row.Amount || row.amount || 0);
-                
-                const found = transactions.find(tx => Math.abs(parseFloat(tx.amount) - Math.abs(rAmount)) < 0.01);
-                if(found) matchedCount++;
+function newItem(){
+ reqd('n','a');
+ S.items.push({id:S.n++, name:val('n'), kind:val('t'), price:cents(val('a')), acc:val('ac'), rate:parseFloat(val('r'))});
+ save(); toast('Item added'); go('items');
+}
 
-                return `
-                    <tr class="hover:bg-zinc-900/50 transition">
-                        <td class="p-3 text-gray-300">${rDate}</td>
-                        <td class="p-3 text-white font-medium">${rDesc}</td>
-                        <td class="p-3 text-gray-200">RM ${rAmount.toFixed(2)}</td>
-                        <td class="p-3">
-                            ${found ? '<span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-1 rounded text-xs font-semibold">Matched</span>' : '<span class="bg-amber-950 text-amber-300 border border-amber-800 px-2 py-1 rounded text-xs font-semibold">Unmatched (New)</span>'}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+function saveItem(id){
+ const x=S.items.find(i=>i.id===id);
+ if(x){ x.name=val('n'); x.kind=val('t'); x.price=cents(val('a')); x.acc=val('ac'); x.rate=parseFloat(val('r')); save(); toast('Item updated'); go('items'); }
+}
 
-            document.getElementById('recon-summary').innerText = `Processed statement rows. Successfully matched ${matchedCount} of ${rows.length} rows with existing ledger transactions.`;
-        }
+function backup(){
+ const blob = new Blob([JSON.stringify(S, null, 2)], {type:'application/json'});
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement('a'); a.href = url; a.download = 'accounting-backup.json'; a.click();
+}
 
-        function filterReconciliation() {
-            const query = document.getElementById('recon-search').value.toLowerCase();
-            const filtered = reconRows.filter(row => {
-                const rDate = (row.Date || row.date || '').toLowerCase();
-                const rDesc = (row.Description || row.description || '').toLowerCase();
-                const rAmount = (row.Amount || row.amount || '').toString();
-                return rDate.includes(query) || rDesc.includes(query) || rAmount.includes(query);
-            });
-            renderReconciliation(filtered);
-        }
+function docView(kind){
+ const i=kind==='inv',e=ed(),D=draft(kind,e),L=i?S.inv:S.bill,P=PANEL&&PANEL.kind===kind?PANEL:null,pv=P&&docOf(P.no),c=calc(D.lines,kind),who=i?'Customer':'Vendor';
+ const pan=P?`<div class="box eo"><div class="form"><b>${{pay:i?'Receive payment':'Pay bill',refund:'Refund',cn:i?'Credit note':'Vendor credit'}[P.t]} - ${P.no}</b><label>Date<input id="pd" type="date" value="${today()}"></label>${P.t==='cn'?'<label>Reason<input id="px"></label>':''}<label>Amount (RM)<input id="pa" type="number" step="0.01" value="${P.t==='pay'?amtv(Math.max(0,bal(pv))):''}"></label><button onclick="savePanel()">Save</button><button class="g" onclick="PANEL=null;render()">Cancel</button></div></div>`:'';
+ const entry=`<div class="box eo"><div class="form">${e?`<b>Editing ${e.no}</b>`:''}<label>${who}<input list="cl" value="${esc(D.party)}" onchange="DR.party=this.value"></label><label>Issued<input type="date" value="${D.date}" onchange="DR.date=this.value"></label><label>Due<input type="date" value="${D.due}" onchange="DR.due=this.value"></label></div>
+ <div class="wrap" style="margin-top:10px"><table><tr><th>Item</th><th>Description</th><th>Qty</th><th>Price</th><th>Account</th>${i?'<th>SST</th>':''}<th class="n">Line total</th><th></th></tr>${D.lines.map((l,n)=>lineRow(l,n,kind)).join('')}</table></div>
+ <div class="form" style="margin-top:8px"><button class="g" onclick="addLine()">Add line</button><b id="dt" style="margin-left:auto">${totText(c,i)}</b></div>
+ <div class="form" style="margin-top:10px"><button onclick="saveDoc('${kind}')">${e?'Save changes':i?'Save invoice':'Save bill'}</button>${e?CANCEL:''}</div></div>`;
+ const rows=L.map((v,k)=>[v,k]).reverse().map(([v,k])=>{const b=bal(v),st=b===0?'<span class="tag p">Paid</span>':'<span class="tag">Open</span>';
+  return `<tr><td>${v.no}</td><td>${esc(v.cust||v.ven)}</td><td>${v.date}</td><td class="n">${rm(v.tot)}</td><td class="n">${rm(b)}</td><td>${st}</td><td><button class="g" onclick="panel('pay','${kind}','${v.no}')">${i?'Receive payment':'Pay bill'}</button> <button class="g" onclick="edit('${kind}','${v.no}')">Edit</button> <button class="g" onclick="del('${kind}',${k},this)">Delete</button></td></tr>`}).join('');
+ return `${pan}${entry}<div class="box wrap"><table><tr><th>No.</th><th>${who}</th><th>Issued</th><th class="n">Total</th><th class="n">Balance</th><th>Status</th><th></th></tr>${rows||'<tr><td colspan=7>Nothing here yet.</td></tr>'}</table></div>`;
+}
 
-        loadTransactions();
-    </script>
-</body>
-</html>
+function saveDoc(kind){
+ try{
+  const e=ed();
+  if(e) updateDoc(e,kind,DR); else addDoc(kind,DR);
+  DR=null; save(); toast('Saved successfully'); render();
+ }catch(err){ toast(err.message); }
+}
+
+function savePanel(){
+ try{
+  const pv=docOf(PANEL.no), amt=cents(val('pa')), dt=val('pd');
+  if(PANEL.t==='pay') addPay(pv,PANEL.kind,dt,amt,'1000','pay');
+  PANEL=null; save(); toast('Recorded successfully'); render();
+ }catch(err){ toast(err.message); }
+}
+
+// Initial seed if empty
+if(!rd(lk('main'))){ seed(false); save(); }
+else { S=fix(rd(lk('main'))); }
+
+render();
+</script>
+</body></html>
