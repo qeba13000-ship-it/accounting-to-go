@@ -1,371 +1,285 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Easy Books</title>
-<style>
-:root{--bg:#f4f6f7;--panel:#fff;--ink:#14262c;--mute:#5d7077;--line:#dbe3e6;--acc:#0e6b6b;--accink:#fff;--side:#12303a;--sideink:#c9dde2;--neg:#b3261e;--pos:#1b7a43;--hl:#e3f2f0;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1a1e;--panel:#162529;--ink:#e6f0f2;--mute:#8da4ab;--line:#26393e;--acc:#3fb7b0;--accink:#06201f;--side:#0a1316;--sideink:#9fb8be;--neg:#ff8a80;--pos:#6fd69a;--hl:#1d3a3c}}
-:root[data-theme="dark"]{--bg:#0e1a1e;--panel:#162529;--ink:#e6f0f2;--mute:#8da4ab;--line:#26393e;--acc:#3fb7b0;--accink:#06201f;--side:#0a1316;--sideink:#9fb8be;--neg:#ff8a80;--pos:#6fd69a;--hl:#1d3a3c}
-*{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,sans-serif;display:flex;min-height:100vh}
-nav{width:220px;background:var(--side);color:var(--sideink);padding:16px 10px;flex:none}
-nav h1{font:700 18px Georgia,serif;color:#fff;margin:0 8px 12px}
-nav a{display:block;padding:9px 12px;border-radius:6px;color:inherit;text-decoration:none;cursor:pointer}
-nav a.on,nav a:hover{background:rgba(255,255,255,.12);color:#fff}
-.co{margin-bottom:14px}.co select,.co input{width:100%;margin-bottom:6px}.co .form{margin:0;flex-wrap:nowrap}.co .form input{min-width:0}
-main{flex:1;min-width:0;padding:20px 26px 60px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
-h2{font:700 22px Georgia,serif;margin:0}h3{margin:22px 0 8px;font-size:16px}
-.card,.box{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:12px}
-.k{color:var(--mute);font-size:13px}.v{font:600 22px Georgia,serif}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-th{color:var(--mute);font-weight:600;font-size:13px}td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
-.wrap{overflow-x:auto}
-input,select,button,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink)}
-button{background:var(--acc);color:var(--accink);border:0;cursor:pointer;font-weight:600}button.g{background:transparent;color:var(--acc);border:1px solid var(--acc);padding:5px 9px}
-button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,summary:focus-visible,tr:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
-label{display:flex;flex-direction:column;font-size:12px;color:var(--mute);gap:2px}
-.bar{height:14px;border-radius:4px;background:var(--acc)}.bar.e{background:var(--neg)}
-.tag{padding:2px 8px;border-radius:99px;font-size:12px;border:1px solid var(--line)}.tag.p{color:var(--pos);border-color:var(--pos)}.tag.neg{color:var(--neg);border-color:var(--neg)}
-tr.click{cursor:pointer}tr.click:hover td,tr.hl td{background:var(--hl)}
-details{position:relative}summary{list-style:none;background:var(--acc);color:var(--accink);padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600}
-details div{position:absolute;right:0;top:40px;background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:170px;z-index:5;padding:6px}
-details a{display:block;padding:8px 10px;cursor:pointer;border-radius:6px}details a:hover{background:var(--bg)}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;display:none;z-index:9}
-.neg{color:var(--neg)}.sub td{font-weight:700}
-@media(max-width:760px){body{flex-direction:column}nav{width:100%;display:flex;overflow-x:auto;gap:4px;padding:10px}nav h1{display:none}nav a{white-space:nowrap}.co{min-width:210px;margin:0 8px 0 0}main{padding:16px}}
-</style>
-<script src="config.js"></script></head><body>
-<nav id="nav"></nav>
-<main><div class="top"><h2 id="title"></h2>
-<details><summary>+ New</summary><div><a onclick="go('inv')">Invoice</a><a onclick="go('bill')">Bill</a><a onclick="CT='sr';go('cash')">Sales receipt</a><a onclick="CT='dep';go('cash')">Bank deposit</a><a onclick="CT='exp';go('cash')">Expense</a><a onclick="go('je')">Journal entry</a></div></details></div>
-<div id="main"></div></main><div id="toast" role="status"></div><datalist id="cl"></datalist><datalist id="pl"></datalist>
-<script>
-const clone=o=>JSON.parse(JSON.stringify(o));
-const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const cents=v=>Math.round(parseFloat(v||0)*100);
-const rm=c=>(c<0?'-':'')+'RM '+(Math.abs(c)/100).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-const amtv=c=>(c/100).toFixed(2);
-const today=()=>new Date().toISOString().slice(0,10);
-const $=s=>document.querySelector(s);
-const val=id=>$('#'+id).value;
-const lk=id=>id==='main'?'adbooks.v1':'adbooks.c.'+id;
-const rd=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
-const wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-const OLDPAY=/^(Payment|Paid|Refund|Credit note) /;
-const mig=(s,kind)=>{(s[kind]||[]).forEach(v=>{if(v.lines)return;const i=kind==='inv',m=(s.je||[]).find(j=>j.ref===v.no&&!OLDPAY.test(j.memo)),acc=i?'4000':(v.acc||(m&&m.lines[0].a)||'6300');v.tot=v.tot||v.amt;v.lines=[{item:'',d:v.desc||'',q:1,p:v.amt,acc,rate:i&&v.amt?Math.round((v.tax||0)/v.amt*100)/100:0,amt:v.amt,tax:v.tax||0}];v.pay=[];v.memo=v.memo||'';const pj=(s.je||[]).find(j=>j.ref===v.no&&/^(Payment|Paid) /.test(j.memo));if(v.paid&&pj)v.pay.push({id:pj.id,date:pj.date,amt:v.tot,k:'pay'})})};
-const fix=s=>{['bank','con','inv','bill','je','cash','items'].forEach(k=>s[k]=s[k]||[]);s.co=s.co||{};s.lock=s.lock||'';mig(s,'inv');mig(s,'bill');return s};
-const typing=()=>document.activeElement&&document.activeElement.matches('input,select,textarea');
-const CFG=window.EASYBOOKS_CONFIG||{},CLOUD=!!(CFG.url&&CFG.key),enc=encodeURIComponent;
-let CO={list:[],cur:'main'},S,cur='dash',E=null,from=null,G={a:'',f:'',t:''},poll=null,CT='sr',LANG=rd('adbooks.lang')||'en',ROLE=CLOUD?'viewer':'editor';
-let syncMsg=CLOUD?'Connecting to the server...':'Saved in this browser only. Use Download backup to keep a copy.',busy=false,again=false,SESS=rd('adbooks.sess'),VER={};
-function setSync(m){syncMsg=m;const e=$('#sync');if(e)e.textContent=m}
-function toast(m){const t=$('#toast');t.textContent=tr(m);t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)}
-const save=()=>{wr(lk(CO.cur),S);if(CLOUD)push()};
-const AH=()=>{const h={apikey:CFG.key,'Content-Type':'application/json'};if(SESS)h.Authorization='Bearer '+SESS.access_token;return h};
-async function api(path,o={}){const go=()=>fetch(CFG.url+path,{...o,headers:{...AH(),...(o.headers||{})}});let r=await go();if(r.status===401&&SESS&&await refreshTok())r=await go();if(!r.ok){let m='';try{m=(await r.json()).message}catch(e){}throw Object.assign(new Error(m||'Server error '+r.status),{code:r.status})}return r.status===204?null:r.json()}
-async function authCall(grant,body){const r=await fetch(CFG.url+'/auth/v1/token?grant_type='+grant,{method:'POST',headers:{apikey:CFG.key,'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json();if(!r.ok)throw new Error(j.error_description||j.msg||'Sign in failed');SESS={access_token:j.access_token,refresh_token:j.refresh_token,email:j.user&&j.user.email};wr('adbooks.sess',SESS)}
-async function refreshTok(){try{await authCall('refresh_token',{refresh_token:SESS.refresh_token});return true}catch(e){SESS=null;wr('adbooks.sess',null);render();return false}}
-async function login(){try{await authCall('password',{email:val('em').trim(),password:val('pw')});render();await startCloud()}catch(e){toast(e.message)}}
-function logout(){SESS=null;S=null;wr('adbooks.sess',null);clearInterval(poll);render()}
-function blankData(){const k=S;seed(true);const d=S;S=k;return d}
-async function loadList(){const r=await api('/rest/v1/books?select=id,name,version&order=created_at.asc');CO.list=r.map(x=>({id:x.id,name:x.name}));r.forEach(x=>{if(x.id!==CO.cur)VER[x.id]=x.version});return r}
-async function loadBook(){const r=await api('/rest/v1/books?id=eq.'+enc(CO.cur)+'&select=data,version');if(!r.length)throw new Error('Company not found');S=fix(r[0].data);VER[CO.cur]=r[0].version;wr(lk(CO.cur),S)}
-async function startCloud(){try{let r=await loadList();if(!r.length){await api('/rest/v1/books',{method:'POST',body:JSON.stringify({id:'main',name:'My company',data:blankData(),version:1})});await loadList()}
- try{CO.cur=localStorage.getItem('adbooks.cur')}catch(e){}if(!CO.list.some(c=>c.id===CO.cur))CO.cur=CO.list[0].id;await loadRole();await loadBook();snap();setSync('Connected. Saved on the server for everyone.');render();clearInterval(poll);poll=setInterval(tick,15000)}catch(e){setSync('Cannot reach the server: '+e.message);if(SESS)$('#main').innerHTML='<p class="neg">'+esc(syncMsg)+'</p><p><button onclick="startCloud()">Try again</button></p>'}}
-async function tick(){if(!SESS||!S||document.hidden||busy||typing())return;try{const r=await api('/rest/v1/books?select=id,name,version&order=created_at.asc'),old=JSON.stringify(CO.list);CO.list=r.map(x=>({id:x.id,name:x.name}));const c=r.find(x=>x.id===CO.cur);let ch=old!==JSON.stringify(CO.list);if(!c&&r.length){CO.cur=r[0].id;await loadBook();ch=true;toast('The company you had open was deleted by someone else.')}else if(c&&c.version>VER[CO.cur]){await loadBook();ch=true;setSync('Updated from the server at '+new Date().toLocaleTimeString())}if(ch)render()}catch(e){}}
-async function push(){if(busy){again=true;return}busy=true;try{const v=VER[CO.cur],r=await api('/rest/v1/books?id=eq.'+enc(CO.cur)+'&version=eq.'+v,{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({data:S,version:v+1,updated_at:new Date().toISOString()})});if(r.length){VER[CO.cur]=v+1;setSync('Saved on the server at '+new Date().toLocaleTimeString())}else{again=false;setSync('Someone else saved first. Latest data loaded.');toast('Someone else saved at the same moment, so your last change was not saved. The latest data is now showing. Please repeat it.');await loadBook();render()}}catch(e){setSync('NOT saved to the server ('+(e.code||'offline')+'). Changes are only on this device.');toast('Could not save to the server.')}busy=false;if(again){again=false;push()}}
-function seed(blank){
- S={n:1,acc:[['1000','Cash at Bank','asset'],['1100','Accounts Receivable','asset'],['1200','Inventory','asset'],['1500','Equipment','asset'],['2000','Accounts Payable','liability'],['2100','SST Payable','liability'],['3000','Owner Equity','equity'],['4000','Sales','income'],['4100','Other Income','income'],['5000','Cost of Sales','expense'],['6000','Salaries','expense'],['6100','Rent','expense'],['6200','Utilities','expense'],['6300','Office Supplies','expense'],['6400','Marketing','expense'],['6500','Professional Fees','expense'],['6600','Bank Charges','expense'],['6700','Travel','expense']].map(([code,name,type])=>({code,name,type})),inv:[],bill:[],je:[],bank:[],con:[],cash:[],items:[],co:{},lock:''};
- if(!blank){post('2026-10-01','Opening balance',[{a:'1000',d:5000000},{a:'3000',c:5000000}]);addDoc('inv',{party:'Sample Customer',date:'2026-10-05',due:'2026-11-04',pj:'Sample Project',lines:[{d:'Consulting service',q:'1',p:'8500',acc:'4000',rate:0.08}]});addDoc('bill',{party:'Sample Supplier',date:'2026-10-06',due:'2026-11-05',pj:'Sample Project',lines:[{d:'Office supplies',q:'1',p:'320',acc:'6300',rate:0}]})}}
-function post(date,memo,lines,ref){chkLock(date);
- const d=lines.reduce((s,l)=>s+(l.d||0),0),c=lines.reduce((s,l)=>s+(l.c||0),0);
- if(!d||d!==c)throw new Error('Debits and credits must be equal and above zero.');
- if(lines.some(l=>!S.acc.find(a=>a.code===l.a)))throw new Error('Unknown account.');
- S.je.push({id:S.n++,date,memo,lines,ref:ref||''})}
-const net=code=>S.je.reduce((s,j)=>s+j.lines.filter(l=>l.a===code).reduce((t,l)=>t+(l.d||0)-(l.c||0),0),0);
-const nat=a=>['asset','expense'].includes(a.type)?net(a.code):-net(a.code);
-const sum=t=>S.acc.filter(a=>a.type===t).reduce((s,a)=>s+nat(a),0);
-const opts=(types,sel)=>S.acc.filter(a=>!types||types.includes(a.type)).map(a=>`<option value="${a.code}"${a.code===sel?' selected':''}>${esc(a.code+' '+a.name)}</option>`).join('');
-const isPay=j=>OLDPAY.test(j.memo);
-const docOf=no=>no&&[...S.inv,...S.bill,...S.cash].find(x=>x.no===no);
-const listOf=no=>String(no).startsWith('INV')?S.inv:String(no).startsWith('BILL')?S.bill:S.cash;
-const CK={sr:'Sales receipt',dep:'Bank deposit',exp:'Expense'},CP={sr:'SR-',dep:'DEP-',exp:'EXP-'};
-const nextNo=(p,L)=>p+(Math.max(1000,...L.map(x=>parseInt(String(x.no).slice(p.length))||0))+1);
-const canEdit=()=>!CLOUD||ROLE==='editor';
-const payJE=v=>S.je.find(j=>j.ref===v.no&&isPay(j));
-const mainJE=v=>S.je.find(j=>j.ref===v.no&&!isPay(j));
-function contact(n,t){if(n&&!S.con.some(c=>c.name===n&&c.t===t))S.con.push({name:n,t,tel:'',mail:'',tin:''})}
-const chkLock=d=>{if(S.lock&&d<=S.lock)throw new Error('The books are closed through '+S.lock+'. Change the closing date in Settings to make this change.')};
-const bal=v=>v.tot-(v.pay||[]).reduce((s,p)=>s+p.amt,0),balAt=(v,d)=>v.date>d?0:v.tot-(v.pay||[]).filter(p=>p.date<=d).reduce((s,p)=>s+p.amt,0);
-const syncDoc=v=>{v.paid=v.tot>0&&bal(v)<=0};
-const sd=(a,x,dr,p)=>x>=0?(dr?{a,d:x,p}:{a,c:x,p}):(dr?{a,c:-x,p}:{a,d:-x,p});
-const defAcc=k=>{const c=k==='inv'?'4000':'6300',ty=k==='inv'?'income':'expense';return S.acc.find(a=>a.code===c)?c:(S.acc.find(a=>a.type===ty)||{}).code||''};
-const blank=k=>({item:'',d:'',q:'1',p:'',acc:defAcc(k),rate:0});
-function calc(lines,kind){const i=kind==='inv',L=lines.map(l=>{const q=parseFloat(l.q),qq=isNaN(q)?0:q,p=cents(l.p),amt=Math.round(qq*p),rate=i?(parseFloat(l.rate)||0):0;return{item:l.item||'',d:(l.d||'').trim(),q:qq,p,acc:l.acc,rate,amt,tax:Math.round(amt*rate)}}).filter(l=>l.amt!==0||l.d),amt=L.reduce((s,l)=>s+l.amt,0),tax=L.reduce((s,l)=>s+l.tax,0);return{L,amt,tax,tot:amt+tax}}
-function docJE(v,kind){const i=kind==='inv',L=i?[sd('1100',v.tot,true)]:[];v.lines.forEach(l=>{if(l.amt)L.push(sd(l.acc,l.amt,!i,v.pj))});if(i){if(v.tax)L.push(sd('2100',v.tax,false))}else L.push(sd('2000',v.tot,false));return L}
-function addDoc(kind,o){const i=kind==='inv',list=i?S.inv:S.bill,c=calc(o.lines,kind);if(!o.party)throw new Error('Enter the '+(i?'customer':'vendor')+' name.');if(!c.L.length||c.tot<=0)throw new Error('Add at least one line with an amount above zero.');const no=nextNo(i?'INV-':'BILL-',list),v={no,[i?'cust':'ven']:o.party,date:o.date,due:o.due||o.date,memo:o.memo||'',pj:o.pj||'',lines:c.L,amt:c.amt,tax:c.tax,tot:c.tot,desc:c.L[0].d,pay:[],paid:false};post(v.date,no+' '+o.party,docJE(v,kind),no);contact(o.party,i?'c':'v');list.push(v);return v}
-function updateDoc(v,kind,o){const i=kind==='inv',c=calc(o.lines,kind);if(!o.party)throw new Error('Enter the '+(i?'customer':'vendor')+' name.');if(!c.L.length||c.tot<=0)throw new Error('Add at least one line with an amount above zero.');chkLock(v.date);chkLock(o.date);const m=mainJE(v);Object.assign(v,{[i?'cust':'ven']:o.party,date:o.date,due:o.due||o.date,memo:o.memo||'',pj:o.pj||'',lines:c.L,amt:c.amt,tax:c.tax,tot:c.tot,desc:c.L[0].d});m.date=v.date;m.memo=v.no+' '+o.party;m.lines=docJE(v,kind);syncDoc(v);contact(o.party,i?'c':'v')}
-function addPay(v,kind,date,amt,acct,how){const i=kind==='inv';let L,memo;if(how==='refund'){memo='Refund '+v.no;L=i?[{a:'1100',d:amt},{a:acct,c:amt}]:[{a:acct,d:amt},{a:'2000',c:amt}]}else{memo=(i?'Payment ':'Paid ')+v.no;L=i?[{a:acct,d:amt},{a:'1100',c:amt}]:[{a:'2000',d:amt},{a:acct,c:amt}]}post(date,memo,L,v.no);v.pay.push({id:S.n-1,date,amt:how==='refund'?-amt:amt,k:how});syncDoc(v)}
-function addCredit(v,kind,o){const i=kind==='inv',tax=i?Math.round(o.amt*(o.rate||0)):0,tot=o.amt+tax,no=(i?'CN-':'VC-')+(S.cnc=(S.cnc||1000)+1),L=i?[{a:o.acc,d:o.amt,p:v.pj}].concat(tax?[{a:'2100',d:tax}]:[],[{a:'1100',c:tot}]):[{a:'2000',d:tot},{a:o.acc,c:tot,p:v.pj}];post(o.date,'Credit note '+no+' for '+v.no+(o.d?' - '+o.d:''),L,v.no);v.pay.push({id:S.n-1,date:o.date,amt:tot,k:'credit',cn:no});syncDoc(v)}
-const KEYS={inv:['Invoice',x=>x.no],bill:['Bill',x=>x.no],cash:['Receipt or expense',x=>x.no],je:['Journal entry',x=>'#'+x.id],con:['Contact',x=>x.name],acc:['Account',x=>x.code],bank:['Bank line',x=>x.date+' '+x.desc]};
-function diffSum(a,b){const o=[];for(const k in KEYS){const[n,f]=KEYS[k],pick=L=>(L||[]).filter(x=>k!=='je'||!x.ref),A=new Map(pick(a[k]).map(x=>[f(x),JSON.stringify(x)])),B=new Map(pick(b[k]).map(x=>[f(x),JSON.stringify(x)]));B.forEach((v,key)=>{if(!A.has(key))o.push(n+' '+key+' added');else if(A.get(key)!==v)o.push(n+' '+key+' changed')});A.forEach((v,key)=>{if(!B.has(key))o.push(n+' '+key+' deleted')})}return o.join('; ').slice(0,500)}
-function audit(action,detail){if(!CLOUD||!SESS)return;api('/rest/v1/audit',{method:'POST',body:JSON.stringify({who:SESS.email,company:CO.cur,action,detail:detail||''})}).catch(()=>{})}
-function run(fn,ok){try{const b=CLOUD?clone(S):null;fn();save();if(CLOUD)audit(ok,diffSum(b,S));toast(ok);render()}catch(e){toast(e.message)}}
-const reqd=(...ids)=>{if(ids.some(i=>!val(i).trim()))throw new Error('Please fill in every field.')};
-function ed(){if(!E||E.k!==cur)return null;const f={inv:()=>S.inv.find(x=>x.no===E.i),bill:()=>S.bill.find(x=>x.no===E.i),je:()=>S.je.find(x=>x.id===E.i),con:()=>S.con[E.i],acc:()=>S.acc.find(x=>x.code===E.i),cash:()=>S.cash.find(x=>x.no===E.i),bank:()=>S.bank.find(x=>x.id===E.i),items:()=>S.items.find(x=>x.id===E.i)}[E.k];return f()||null}
-const CANCEL='<button class="g" onclick="cancel()">Cancel</button>';
-const PB=k=>`<button class="g keep" onclick="exportPdf('${k}')">Download PDF</button>`;
-let DR=null,PANEL=null,AG='',PVURL=null,PVBLOB=null,PVNAME='';
-const totText=(c,i)=>'Subtotal '+rm(c.amt)+(i?'   SST '+rm(c.tax):'')+'   Total '+rm(c.tot);
-function draft(kind,e){const key=e?e.no:'new';if(!DR||DR.kind!==kind||DR.key!==key)DR=e?{kind,key,party:e.cust||e.ven,date:e.date,due:e.due||e.date,pj:e.pj||'',memo:e.memo||'',lines:e.lines.map(l=>({item:l.item,d:l.d,q:String(l.q),p:amtv(l.p),acc:l.acc,rate:l.rate}))}:{kind,key,party:'',date:today(),due:today(),pj:'',memo:'',lines:[blank(kind)]};return DR}
-const sstSel=(v,on)=>`<select onchange="${on}">${[0,0.06,0.08].map(x=>`<option value="${x}"${x===(parseFloat(v)||0)?' selected':''}>${x?x*100+'%':'None'}</option>`).join('')}</select>`;
-function lineRow(l,n,kind){const i=kind==='inv';return `<tr><td><select onchange="pickItem(${n},this.value)" aria-label="Item"><option value="">-</option>${S.items.map(x=>`<option value="${x.id}"${String(x.id)===String(l.item)?' selected':''}>${esc(x.name)}</option>`).join('')}</select></td><td><input value="${esc(l.d)}" onchange="DR.lines[${n}].d=this.value" aria-label="Description" style="width:100%;min-width:140px"></td><td><input type="number" step="any" value="${esc(l.q)}" onchange="DR.lines[${n}].q=this.value;recalc()" aria-label="Quantity" style="width:70px"></td><td><input type="number" step="0.01" value="${esc(l.p)}" onchange="DR.lines[${n}].p=this.value;recalc()" aria-label="Price" style="width:100px"></td><td><select onchange="DR.lines[${n}].acc=this.value" aria-label="Account">${opts(i?['income']:['expense'],l.acc)}</select></td>${i?`<td>${sstSel(l.rate,`DR.lines[${n}].rate=this.value;recalc()`)}</td>`:''}<td class="n" id="lt${n}">${rm(Math.round((parseFloat(l.q)||0)*cents(l.p)))}</td><td><button class="g" onclick="rmLine(${n})" aria-label="Remove line">x</button></td></tr>`}
-function pickItem(n,id){const x=S.items.find(z=>String(z.id)===id),l=DR.lines[n],i=DR.kind==='inv';l.item=id;if(x){l.d=x.name;l.p=amtv(i?x.price:(x.cost||0));l.acc=i?x.acc:(x.bacc||l.acc);l.rate=i?x.rate:0}render()}
-function addLine(){DR.lines.push(blank(DR.kind));render()}
-function rmLine(n){if(DR.lines.length>1)DR.lines.splice(n,1);render()}
-function recalc(){const c=calc(DR.lines,DR.kind);DR.lines.forEach((l,n)=>{const e=$('#lt'+n);if(e)e.textContent=rm(Math.round((parseFloat(l.q)||0)*cents(l.p)))});const e=$('#dt');if(e)e.textContent=totText(c,DR.kind==='inv')}
-function panel(t,kind,no){PANEL={t,kind,no};render();scrollTo(0,0)}
-function docView(kind){const i=kind==='inv',e=ed(),D=draft(kind,e),L=i?S.inv:S.bill,P=PANEL&&PANEL.kind===kind?PANEL:null,pv=P&&docOf(P.no),c=calc(D.lines,kind),who=i?'Customer':'Vendor';
- const pan=P?`<div class="box eo"><div class="form"><b>${{pay:i?'Receive payment':'Pay bill',refund:'Refund',cn:i?'Credit note':'Vendor credit'}[P.t]} - ${P.no}</b><label>Date<input id="pd" type="date" value="${today()}"></label>${P.t==='cn'?'<label>Reason<input id="px"></label>':''}<label>Amount${P.t==='cn'&&i?' before SST':''} (RM)<input id="pa" type="number" step="0.01" value="${P.t==='pay'?amtv(Math.max(0,bal(pv))):P.t==='refund'?amtv(Math.max(0,-bal(pv))):''}"></label>${P.t==='cn'?(i?`<label>SST${sstSel(0,'')}</label>`.replace('<select onchange="">','<select id="pr">'):'')+`<label>Account<select id="pc">${opts(i?['income']:['expense'],defAcc(kind))}</select></label>`:`<label>${P.t==='refund'?(i?'Paid from':'Received into'):(i?'Deposit to':'Paid from')}<select id="pb">${opts(['asset'],'1000')}</select></label>`}<button onclick="savePanel()">Save</button><button class="g" onclick="PANEL=null;render()">Cancel</button></div></div>`:'';
- const entry=`<div class="box eo"><div class="form">${e?`<b>Editing ${e.no}</b>`:''}<label>${who}<input list="cl" value="${esc(D.party)}" onchange="DR.party=this.value"></label><label>Issued<input type="date" value="${D.date}" onchange="DR.date=this.value"></label><label>Due<input type="date" value="${D.due}" onchange="DR.due=this.value"></label><label>Project (optional)<input list="pl" value="${esc(D.pj)}" onchange="DR.pj=this.value"></label><label>Note (optional)<input value="${esc(D.memo)}" onchange="DR.memo=this.value"></label></div>
- <div class="wrap" style="margin-top:10px"><table><tr><th>Item</th><th>Description</th><th>Qty</th><th>Price</th><th>Account</th>${i?'<th>SST</th>':''}<th class="n">Line total</th><th></th></tr>${D.lines.map((l,n)=>lineRow(l,n,kind)).join('')}</table></div>
- <div class="form" style="margin-top:8px"><button class="g" onclick="addLine()">Add line</button><b id="dt" style="margin-left:auto">${totText(c,i)}</b></div>
- <div class="form" style="margin-top:10px"><button onclick="saveDoc('${kind}')">${e?'Save changes':i?'Save invoice':'Save bill'}</button>${e?CANCEL:''}</div></div>`;
- const pays=e&&e.pay.length?`<div class="box eo"><b>Payments and credits</b><table><tr><th>Date</th><th>Type</th><th class="n">Amount</th><th></th></tr>${e.pay.map(p=>`<tr><td>${p.date}</td><td>${p.k==='credit'?'Credit note '+p.cn:p.k==='refund'?'Refund':'Payment'}</td><td class="n">${rm(p.amt)}</td><td><button class="g" onclick="del('je',${p.id},this)">Delete</button></td></tr>`).join('')}</table></div>`:'';
- const rows=L.map((v,k)=>[v,k]).reverse().map(([v,k])=>{const b=bal(v),od=b>0&&(v.due||v.date)<today(),st=b===0?'<span class="tag p">Paid</span>':b<0?'<span class="tag">Credit '+rm(-b)+'</span>':od?'<span class="tag neg">Overdue</span>':v.pay.length?'<span class="tag">Part paid</span>':'<span class="tag">Open</span>';
-  return `<tr class="${E&&E.i===v.no?'hl':''}"><td>${v.no}</td><td>${esc(v.cust||v.ven)}</td><td>${v.date}</td><td>${v.due||v.date}</td><td class="n">${rm(v.tot)}</td><td class="n">${rm(b)}</td><td>${st}</td><td>${b>0?`<button class="g" onclick="panel('pay','${kind}','${v.no}')">${i?'Receive payment':'Pay bill'}</button> `:''}${b<0?`<button class="g" onclick="panel('refund','${kind}','${v.no}')">Refund</button> `:''}<button class="g" onclick="panel('cn','${kind}','${v.no}')">${i?'Credit note':'Vendor credit'}</button> <button class="g keep" onclick="exportPdf('doc:${v.no}')">PDF</button> <button class="g" onclick="edit('${kind}','${v.no}')">Edit</button> <button class="g" onclick="del('${kind}',${k},this)">Delete</button></td></tr>`}).join('');
- return `${pan}${entry}${pays}<p>${PB(kind)}</p><div class="box wrap"><table><tr><th>No.</th><th>${who}</th><th>Issued</th><th>Due</th><th class="n">Total</th><th class="n">Balance</th><th>Status</th><th></th></tr>${rows||'<tr><td colspan=8>Nothing here yet. Use the form above.</td></tr>'}</table></div>`}
-function aging(kind,d){const rows={};(kind==='inv'?S.inv:S.bill).forEach(v=>{const b=balAt(v,d);if(!b)return;const n=v.cust||v.ven,days=Math.floor((new Date(d+'T00:00:00Z')-new Date((v.due||v.date)+'T00:00:00Z'))/864e5),k=days<=0?0:days<=30?1:days<=60?2:days<=90?3:4;(rows[n]=rows[n]||[0,0,0,0,0])[k]+=b});const L=Object.entries(rows).map(([n,a])=>({n,a,t:a.reduce((s,x)=>s+x,0)})).sort((x,y)=>y.t-x.t),tot=[0,1,2,3,4].map(k=>L.reduce((s,r)=>s+r.a[k],0));return{L,tot,all:tot.reduce((s,x)=>s+x,0)}}
-const AGH=['Current','1-30 days','31-60 days','61-90 days','Over 90 days'];
-function agingHtml(kind){const d=AG||today(),A=aging(kind,d),i=kind==='inv';return `<h3>${i?'Accounts receivable aging':'Accounts payable aging'} ${PB(i?'ar':'ap')}</h3>${i?`<div class="form" style="margin-bottom:8px"><label>As of<input type="date" value="${d}" onchange="AG=this.value;render()"></label></div>`:''}<div class="box wrap"><table><tr><th>${i?'Customer':'Vendor'}</th>${AGH.map(h=>`<th class="n">${h}</th>`).join('')}<th class="n">Total</th></tr>${A.L.map(r=>`<tr><td>${esc(r.n)}</td>${r.a.map(x=>`<td class="n">${x?rm(x):''}</td>`).join('')}<td class="n">${rm(r.t)}</td></tr>`).join('')||'<tr><td colspan=7>Nothing outstanding.</td></tr>'}<tr class="sub"><td>Total</td>${A.tot.map(x=>`<td class="n">${rm(x)}</td>`).join('')}<td class="n">${rm(A.all)}</td></tr></table></div>`}
-function docPdfData(no){const v=docOf(no),i=no.startsWith('INV'),co=S.co||{},nm=(CO.list.find(c=>c.id===CO.cur)||{}).name||'',who=v.cust||v.ven,ct=S.con.find(c=>c.name===who)||{};
- const head=[{x:co.name||nm,b:1,z:13}].concat(String(co.addr||'').split('\n').filter(Boolean),[co.tel&&'Tel: '+co.tel,co.email,co.tin&&'TIN: '+co.tin,co.sst&&'SST reg. no.: '+co.sst].filter(Boolean));
- const to=[{x:i?'BILL TO':'VENDOR',b:1},who].concat([ct.tin&&'TIN: '+ct.tin,ct.tel,ct.mail].filter(Boolean),['Date: '+v.date,'Due: '+(v.due||v.date)],v.pj?['Project: '+v.pj]:[],v.memo?['Note: '+v.memo]:[]);
- const items=v.lines.map(l=>[l.d||'',String(l.q),mny(l.p),l.rate?Math.round(l.rate*100)+'%':'',mny(l.amt)]),tot=[['Subtotal',mny(v.amt)]].concat(v.tax?[['SST',mny(v.tax)]]:[],[['TOTAL',mny(v.tot)]]),bold=[tot.length-1];
- (v.pay||[]).forEach(p=>tot.push([(p.k==='credit'?'Credit note '+p.cn:p.k==='refund'?'Refund':'Payment received')+' '+p.date,mny(-p.amt)]));tot.push(['BALANCE DUE',mny(bal(v))]);bold.push(tot.length-1);
- return{title:(i?'INVOICE ':'BILL ')+no,file:no,tables:[{lines:head},{lines:to},{head:['Description','Qty','Price','SST','Amount (RM)'],body:items,right:[1,2,3,4]},{body:tot,right:[1],bold},{lines:String(co.note||'').split('\n').filter(Boolean)}]}}
-const V={
-dash(){const inc=sum('income'),exp=sum('expense'),mx=Math.max(inc,exp,1);
- return `<div class="form" style="margin-bottom:14px"><button onclick="go('inv')">Create invoice</button><button onclick="go('bill')">Enter bill</button><button onclick="go('bank')">Import bank statement</button><button onclick="CT='sr';go('cash')">Sales receipt</button><button onclick="CT='exp';go('cash')">Expense</button></div><div class="grid"><div class="card"><div class="k">Cash at bank</div><div class="v">${rm(net('1000'))}</div></div>
- <div class="card"><div class="k">Owed to you</div><div class="v">${rm(net('1100'))}</div></div>
- <div class="card"><div class="k">You owe</div><div class="v">${rm(-net('2000'))}</div></div>
- <div class="card"><div class="k">Profit so far</div><div class="v ${inc-exp<0?'neg':''}">${rm(inc-exp)}</div></div></div>
- <div class="box"><div class="k">Income ${rm(inc)}</div><div class="bar" style="width:${inc/mx*100}%"></div><div class="k" style="margin-top:10px">Expenses ${rm(exp)}</div><div class="bar e" style="width:${exp/mx*100}%"></div></div>
- <h3>Recent activity <span class="k">(click one to open it)</span></h3><div class="box wrap"><table><tr><th>Date</th><th>Description</th><th class="n">Amount</th></tr>${S.je.slice(-6).reverse().map(j=>`<tr class="click" onclick="openTx(${j.id})"><td>${j.date}</td><td>${esc(j.memo)}</td><td class="n">${rm(j.lines.reduce((s,l)=>s+(l.d||0),0))}</td></tr>`).join('')}</table></div>
- <div class="eo"><h3>Data</h3><p class="k">Start fresh whenever you like. This erases everything in this company for everyone using it.</p><p><button class="g" onclick="resetData(true,this)">Start blank company</button> <button class="g" onclick="resetData(false,this)">Load sample data</button> <button class="g" onclick="backup()">Download backup</button> <button class="g" style="color:var(--neg);border-color:var(--neg)" onclick="delCo()">Delete this company</button> <label class="k" style="display:inline-flex;vertical-align:middle">Restore backup <input type="file" accept=".json" onchange="restoreFile(this)"></label>${rd('adbooks.bak.'+CO.cur)?' <button class="g" onclick="restoreBak()">Restore this device\'s earlier copy</button>':''}</p></div>`},
-inv(){return docView('inv')},
-bill(){return docView('bill')},
-items(){const e=ed();return `<div class="box eo"><div class="form">${e?'<b>Editing item</b>':''}<label>Name<input id="n" value="${esc(e&&e.name)}"></label><label>Type<select id="t"><option value="s"${e&&e.kind==='p'?'':' selected'}>Service</option><option value="p"${e&&e.kind==='p'?' selected':''}>Product</option></select></label><label>Selling price (RM)<input id="a" type="number" step="0.01" value="${e?amtv(e.price):''}"></label><label>Income account<select id="ac">${opts(['income'],e?e.acc:defAcc('inv'))}</select></label><label>SST<select id="r">${[0,0.06,0.08].map(x=>`<option value="${x}"${e&&x===e.rate?' selected':''}>${x?x*100+'%':'None'}</option>`).join('')}</select></label><label>Buying cost (RM, optional)<input id="cs" type="number" step="0.01" value="${e&&e.cost?amtv(e.cost):''}"></label><label>Expense account (optional)<select id="ba">${opts(['expense'],e?e.bacc:defAcc('bill'))}</select></label><button onclick="${e?`saveItem(${e.id})`:'newItem()'}">${e?'Save changes':'Save item'}</button>${e?CANCEL:''}</div></div><div class="box wrap"><table><tr><th>Name</th><th>Type</th><th class="n">Price</th><th class="n">Cost</th><th>SST</th><th></th></tr>${S.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.kind==='p'?'Product':'Service'}</td><td class="n">${rm(x.price)}</td><td class="n">${x.cost?rm(x.cost):''}</td><td>${x.rate?x.rate*100+'%':''}</td><td><button class="g" onclick="edit('items',${x.id})">Edit</button> <button class="g" onclick="del('items',${x.id},this)">Delete</button></td></tr>`).join('')||'<tr><td colspan=6>No items yet. Add the things you sell or buy often, then pick them on invoices and bills.</td></tr>'}</table></div>`},
-set(){const c=S.co||{},sn=rd('adbooks.snap.'+CO.cur)||[];return `<div class="box eo"><div class="form" style="flex-direction:column;align-items:stretch;max-width:560px"><b>Company details (printed on invoice PDFs)</b><label>Company logo (JPG or PNG)<input type="file" accept="image/*" onchange="uploadLogo(this)"></label>${c.logo?`<div><img src="${c.logo}" alt="Logo" style="max-height:60px;max-width:200px;background:#fff;padding:4px;border-radius:4px"> <button class="g" onclick="run(()=>{delete S.co.logo},'Logo removed')">Remove logo</button></div>`:''}<label>Address<textarea id="ad" rows="3">${esc(c.addr)}</textarea></label><label>Phone<input id="tl" value="${esc(c.tel)}"></label><label>Email<input id="em2" value="${esc(c.email)}"></label><label>TIN<input id="ti" value="${esc(c.tin)}"></label><label>SST registration no.<input id="ss" value="${esc(c.sst)}"></label><b style="margin-top:12px">Payment details (printed at the bottom of invoices)</b><label>Beneficiary name<input id="bf" value="${esc(c.bene)}"></label><label>Bank name (optional)<input id="bk2" value="${esc(c.bankn)}"></label><label>Bank account no.<input id="ac2" value="${esc(c.acct)}"></label><label>Extra remark (optional, printed above the thank-you line)<input id="nt" value="${esc(c.note)}"></label><b style="margin-top:12px">Lock the books</b><label>Closed through (no changes on or before this date)<input id="lk" type="date" value="${S.lock||''}"></label><button onclick="saveSet()">Save settings</button></div></div>
-<div class="box eo"><b>Safety copies on this device</b><p class="k">A copy of this company is saved in this browser each time you open it (at most every 6 hours). If something ever goes wrong, you can restore one here.</p><table><tr><th>Saved</th><th>Contents</th><th></th></tr>${sn.map((x,n)=>`<tr><td>${esc(new Date(x.t).toLocaleString())}</td><td>${x.data.inv.length} invoices, ${x.data.bill.length} bills, ${x.data.je.length} entries</td><td><button class="g" onclick="restoreSnap(${n},this)">Restore</button></td></tr>`).join('')||'<tr><td colspan=3>None yet.</td></tr>'}</table></div>`},
-bank(){const e=ed(),B=S.bank,un=B.filter(b=>!b.je).length,tot=B.reduce((s,b)=>s+b.amt,0),got=new Set(B.filter(b=>b.je).map(b=>b.je)),ef=e?`<div class="box"><div class="form"><b>Editing statement line</b><label>Date<input id="d" type="date" value="${e.date}"></label><label>Description<input id="x" value="${esc(e.desc)}"></label><label>Amount (RM, money out is negative)<input id="a" type="number" step="0.01" value="${amtv(e.amt)}"></label><button onclick="saveBank(${e.id})">Save changes</button>${CANCEL}</div></div>`:'';
- const row=(b,i)=>{let act='<span class="tag p">Matched</span>';if(!b.je){const cs=S.je.filter(j=>!got.has(j.id)&&j.lines.some(l=>l.a==='1000'&&(l.d||0)-(l.c||0)===b.amt)),dc=(b.amt>0?S.inv:S.bill).find(v=>bal(v)===Math.abs(b.amt));
-  act=(cs.length?`<select id="m${b.id}">${cs.map(j=>`<option value="${j.id}">${j.date} ${esc(j.memo)}</option>`).join('')}</select> <button class="g" onclick="matchBank(${b.id})">Match</button> `:'')+(dc?`<button class="g" onclick="payBank(${b.id},'${dc.no}')">${b.amt>0?'Receive payment for':'Pay'} ${dc.no}</button> `:'')+`<select id="a${b.id}">${opts(b.amt>0?['income','liability','equity','asset']:['expense','liability','equity','asset'])}</select> <button onclick="recBank(${b.id})">Record</button>`}
-  return `<tr><td>${b.date}</td><td>${esc(b.desc)}</td><td class="n ${b.amt<0?'neg':''}">${rm(b.amt)}</td><td>${act}</td><td>${b.je?'':`<button class="g" onclick="edit('bank',${b.id})">Edit</button> `}<button class="g" onclick="del('bank',${i},this)">Delete</button></td></tr>`};
- return `${ef}<p class="k">Choose your bank's CSV file, or paste its rows below. The first row must name a Date column, a Description column, and either Amount (money out as negative) or Debit and Credit columns. Rows already imported are skipped.</p><div class="form"><input id="f" type="file" accept=".csv,.txt" onchange="readFile(this)"></div><textarea id="csv" rows="4" style="width:100%;margin-top:8px" placeholder="Date,Description,Amount&#10;2026-10-02,Customer payment,1200.00&#10;2026-10-03,Office rent,-800.00"></textarea><div class="form" style="margin:8px 0 14px"><button onclick="importCsv()">Import rows</button></div>
- <div class="grid"><div class="card"><div class="k">Left to review</div><div class="v">${un}</div></div><div class="card"><div class="k">Statement total</div><div class="v">${rm(tot)}</div></div><div class="card"><div class="k">Cash in your books</div><div class="v">${rm(net('1000'))}</div></div></div>
- <h3>Statement lines</h3><div class="box wrap"><table><tr><th>Date</th><th>Description</th><th class="n">Amount</th><th>Reconcile</th><th></th></tr>${B.map(row).join('')||'<tr><td colspan=5>Nothing imported yet.</td></tr>'}</table></div>`},
-con(){const e=ed(),due=(n,t)=>(t==='c'?S.inv.filter(v=>v.cust===n):S.bill.filter(v=>v.ven===n)).reduce((s,v)=>s+bal(v),0);
- return `<div class="box"><div class="form">${e?'<b>Editing contact</b>':''}<label>Name<input id="n" value="${esc(e&&e.name)}"></label><label>Type<select id="t"><option value="c"${e&&e.t==='v'?'':' selected'}>Customer</option><option value="v"${e&&e.t==='v'?' selected':''}>Vendor</option></select></label><label>Phone<input id="tel" value="${esc(e&&e.tel)}"></label><label>Email<input id="m" value="${esc(e&&e.mail)}"></label><label>TIN / SST no.<input id="tin" value="${esc(e&&e.tin)}"></label><button onclick="${e?`saveCon(${E.i})`:'newCon()'}">${e?'Save changes':'Save contact'}</button>${e?CANCEL:''}</div></div><div class="box wrap"><table><tr><th>Name</th><th>Type</th><th>Phone</th><th>Email</th><th>TIN / SST no.</th><th class="n">Outstanding</th><th></th></tr>${S.con.map((x,i)=>`<tr><td>${esc(x.name)}</td><td>${x.t==='c'?'Customer':'Vendor'}</td><td>${esc(x.tel)}</td><td>${esc(x.mail)}</td><td>${esc(x.tin)}</td><td class="n">${rm(due(x.name,x.t))}</td><td><button class="g" onclick="edit('con',${i})">Edit</button> <button class="g" onclick="del('con',${i},this)">Delete</button></td></tr>`).join('')||'<tr><td colspan=7>No contacts yet. They are added automatically when you save an invoice or bill.</td></tr>'}</table></div>`},
-job(){const P={};S.je.forEach(j=>j.lines.forEach(l=>{if(!l.p)return;const a=S.acc.find(x=>x.code===l.a),o=P[l.p]=P[l.p]||{i:0,e:0};if(a.type==='income')o.i+=(l.c||0)-(l.d||0);if(a.type==='expense')o.e+=(l.d||0)-(l.c||0)}));
- return `<p class="k">Add a project name when saving an invoice or bill and it appears here.</p><div class="box wrap"><table><tr><th>Project</th><th class="n">Income</th><th class="n">Costs</th><th class="n">Profit</th><th class="n">Margin</th></tr>${Object.keys(P).map(k=>{const o=P[k],p=o.i-o.e;return `<tr><td>${esc(k)}</td><td class="n">${rm(o.i)}</td><td class="n">${rm(o.e)}</td><td class="n ${p<0?'neg':''}">${rm(p)}</td><td class="n">${o.i?Math.round(p/o.i*100)+'%':'-'}</td></tr>`}).join('')||'<tr><td colspan=5>No projects tracked yet.</td></tr>'}</table></div>`},
-gl(){const A=G.a?S.acc.filter(a=>a.code===G.a):S.acc,inr=d=>(!G.f||d>=G.f)&&(!G.t||d<=G.t),kind=j=>{const v=docOf(j.ref);return v?(v.type?CK[v.type]:isPay(j)?(/^Credit note/.test(j.memo)?'Credit note':'Payment'):v.no.startsWith('INV')?'Invoice':'Bill'):'Journal'};
- const sec=A.map(a=>{let bal=0;const s=['asset','expense'].includes(a.type)?1:-1,rows=S.je.flatMap(j=>j.lines.filter(l=>l.a===a.code).map(l=>({j,l}))).sort((x,y)=>x.j.date.localeCompare(y.j.date)||x.j.id-y.j.id).map(({j,l})=>{bal+=((l.d||0)-(l.c||0))*s;return{j,l,bal}}).filter(r=>inr(r.j.date));
-  if(!rows.length&&!G.a)return '';
-  return `<h3>${esc(a.code+' '+a.name)}</h3><div class="box wrap"><table><tr><th>Date</th><th>Entry</th><th>Type</th><th>Description</th><th>Ref</th><th class="n">Debit</th><th class="n">Credit</th><th class="n">Balance</th></tr>${rows.map(r=>`<tr class="click" tabindex="0" title="Open this transaction" onclick="openTx(${r.j.id})" onkeydown="if(event.key==='Enter')openTx(${r.j.id})"><td>${r.j.date}</td><td>#${r.j.id}</td><td>${kind(r.j)}</td><td>${esc(r.j.memo)}</td><td>${esc(r.j.ref)}</td><td class="n">${r.l.d?rm(r.l.d):''}</td><td class="n">${r.l.c?rm(r.l.c):''}</td><td class="n">${rm(r.bal)}</td></tr>`).join('')||'<tr><td colspan=8>No transactions in this period.</td></tr>'}</table></div>`}).join('');
- return `<p class="k">Every transaction, account by account, with a running balance. Click any line to open and edit the original entry.</p><div class="form" style="margin-bottom:6px"><label>Account<select onchange="G.a=this.value;render()"><option value="">All accounts</option>${opts(0,G.a)}</select></label><label>From<input type="date" value="${G.f}" onchange="G.f=this.value;render()"></label><label>To<input type="date" value="${G.t}" onchange="G.t=this.value;render()"></label><button class="g keep" onclick="G={a:'',f:'',t:''};render()">Clear</button>${PB('gl')}</div>${sec||'<p class="k">No transactions yet.</p>'}`},
-je(){const e=ed(),dr=e&&e.lines.find(l=>l.d),cr=e&&e.lines.find(l=>l.c);
- return `<div class="box"><div class="form">${e?`<b>Editing entry #${e.id}</b>`:''}<label>Date<input id="d" type="date" value="${e?e.date:today()}"></label><label>Memo<input id="x" value="${esc(e&&e.memo)}"></label><label>Debit account<select id="dr">${opts(0,dr&&dr.a)}</select></label><label>Credit account<select id="cr">${opts(0,cr&&cr.a)}</select></label><label>Amount (RM)<input id="a" type="number" step="0.01" value="${e?amtv(dr.d):''}"></label><button onclick="${e?`saveJE(${e.id})`:'newJE()'}">${e?'Save changes':'Post entry'}</button>${e?CANCEL:''}</div></div>
- <p>${PB('je')}</p><div class="box wrap"><table><tr><th>#</th><th>Date</th><th>Memo</th><th>Account</th><th class="n">Debit</th><th class="n">Credit</th><th></th></tr>${S.je.slice().reverse().map(j=>j.lines.map((l,i)=>`<tr class="${E&&E.i===j.id?'hl':''}"><td>${i?'':j.id}</td><td>${i?'':j.date}</td><td>${i?'':esc(j.memo)}</td><td>${esc(l.a+' '+S.acc.find(a=>a.code===l.a).name)}</td><td class="n">${l.d?rm(l.d):''}</td><td class="n">${l.c?rm(l.c):''}</td><td>${i?'':`<button class="g" onclick="openTx(${j.id})">Edit</button> <button class="g" onclick="del('je',${j.id},this)">Delete</button>`}</td></tr>`).join('')).join('')}</table></div>`},
-acc(){const e=ed();
- return `<div class="box"><div class="form">${e?'<b>Editing account</b>':''}<label>Code<input id="k" size=8 value="${esc(e&&e.code)}"${e?' disabled':''}></label><label>Name<input id="n" value="${esc(e&&e.name)}"></label><label>Type<select id="t">${['asset','liability','equity','income','expense'].map(t=>`<option value="${t}"${e&&e.type===t?' selected':''}>${t[0].toUpperCase()+t.slice(1)}</option>`).join('')}</select></label><button onclick="${e?`saveAcc('${esc(e.code)}')`:'newAcc()'}">${e?'Save changes':'Add account'}</button>${e?CANCEL:''}</div></div>
- <div class="box wrap"><table><tr><th>Code</th><th>Name</th><th>Type</th><th class="n">Balance</th><th></th></tr>${S.acc.slice().sort((a,b)=>a.code.localeCompare(b.code)).map(a=>`<tr><td>${esc(a.code)}</td><td>${esc(a.name)}</td><td>${a.type}</td><td class="n">${rm(nat(a))}</td><td><button class="g" onclick="edit('acc','${esc(a.code)}')">Edit</button> <button class="g" onclick="del('acc','${esc(a.code)}',this)">Delete</button></td></tr>`).join('')}</table></div>`},
-cash(){const e=ed(),ty=e?e.type:CT,lab={sr:['Customer (optional)','Income account','Deposit to'],dep:['Received from (optional)','Credit account','Deposit to'],exp:['Paid to (optional)','Expense account','Paid from']}[ty],types={sr:['income'],dep:['income','equity','liability'],exp:['expense']}[ty],r=e&&e.amt?Math.round((e.tax||0)/e.amt*100)/100:0;
- const tabs=e?'':`<div class="form" style="margin-bottom:10px">${['sr','dep','exp'].map(k=>`<button class="${k===CT?'':'g'}" onclick="CT='${k}';render()">${CK[k]}</button>`).join('')}</div>`;
- return `${tabs}<div class="box"><div class="form"><b>${e?'Editing '+e.no:CK[ty]}</b><label>Date<input id="d" type="date" value="${e?e.date:today()}"></label><label>${lab[0]}<input id="c" list="cl" value="${esc(e&&e.who)}"></label><label>Description<input id="x" value="${esc(e&&e.desc)}"></label><label>${lab[1]}<select id="ac">${opts(types,e?e.acc:ty==='sr'?'4000':ty==='exp'?'6000':'')}</select></label><label>${lab[2]}<select id="bk">${opts(['asset'],e?e.bank:'1000')}</select></label>${ty==='sr'?`<label>SST<select id="r">${[0,0.06,0.08].map(x=>`<option value="${x}"${x===r?' selected':''}>${x?x*100+'%':'None'}</option>`).join('')}</select></label>`:''}<label>Project (optional)<input id="j" list="pl" value="${esc(e&&e.pj)}"></label><label>Amount (RM)<input id="a" type="number" step="0.01" value="${e?amtv(e.amt):''}"></label><button onclick="${e?`saveCash('${e.no}')`:'newCash()'}">${e?'Save changes':'Save'}</button>${e?CANCEL:''}</div></div>
- <p>${PB('cash')}</p><div class="box wrap"><table><tr><th>No.</th><th>Type</th><th>Date</th><th>Name</th><th>Description</th><th class="n">Amount</th><th></th></tr>${S.cash.map((v,k)=>[v,k]).reverse().map(([v,k])=>`<tr class="${E&&E.i===v.no?'hl':''}"><td>${v.no}</td><td>${CK[v.type]}</td><td>${v.date}</td><td>${esc(v.who)}</td><td>${esc(v.desc)}</td><td class="n">${rm(v.tot||v.amt)}</td><td><button class="g" onclick="edit('cash','${v.no}')">Edit</button> <button class="g" onclick="del('cash',${k},this)">Delete</button></td></tr>`).join('')||'<tr><td colspan=7>Nothing here yet. Use the form above.</td></tr>'}</table></div>`},
-hist(){loadHist();return '<p class="k">The latest 200 changes, newest first.</p><div class="box wrap" id="hist">Loading...</div>'},
-rep(){const row=a=>`<tr><td>${esc(a.code+' '+a.name)}</td><td class="n">${rm(nat(a))}</td></tr>`,L=t=>S.acc.filter(a=>a.type===t).map(row).join('');
- const inc=sum('income'),exp=sum('expense'),td=S.acc.reduce((s,a)=>s+Math.max(net(a.code),0),0),tc=S.acc.reduce((s,a)=>s+Math.max(-net(a.code),0),0);
- return `${plHtml()}
- ${agingHtml('inv')}${agingHtml('bill')}
- <h3>Balance sheet ${PB('bs')}</h3><div class="box wrap"><table><tr><th>Assets</th><th></th></tr>${L('asset')}<tr class="sub"><td>Total assets</td><td class="n">${rm(sum('asset'))}</td></tr><tr><th>Liabilities</th><th></th></tr>${L('liability')}<tr><th>Equity</th><th></th></tr>${L('equity')}<tr><td>Current year profit</td><td class="n">${rm(inc-exp)}</td></tr><tr class="sub"><td>Total liabilities and equity</td><td class="n">${rm(sum('liability')+sum('equity')+inc-exp)}</td></tr></table></div>
- <h3>Trial balance ${PB('tb')}</h3><div class="box wrap"><table><tr><th>Account</th><th class="n">Debit</th><th class="n">Credit</th></tr>${S.acc.map(a=>{const x=net(a.code);return `<tr><td>${esc(a.code+' '+a.name)}</td><td class="n">${x>0?rm(x):''}</td><td class="n">${x<0?rm(-x):''}</td></tr>`}).join('')}<tr class="sub"><td>Total ${td===tc?'(balanced)':'(NOT balanced)'}</td><td class="n">${rm(td)}</td><td class="n">${rm(tc)}</td></tr></table></div>`}};
-const T={dash:'Dashboard',inv:'Invoices',bill:'Bills',cash:'Receipts & expenses',items:'Products & services',bank:'Bank',con:'Customers & vendors',job:'Projects',gl:'General ledger',je:'Journal',acc:'Chart of accounts',rep:'Reports',set:'Settings'};if(CLOUD)T.hist='History';
-function go(v){cur=v;E=null;from=null;DR=null;PANEL=null;document.querySelectorAll('details').forEach(d=>d.open=false);render()}
-function edit(k,i){E={k,i};cur=k;render();scrollTo(0,0)}
-function cancel(){E=null;DR=null;PANEL=null;if(from){const f=from;go(f)}else render()}
-function back(){E=null;if(from)go(from);}
-function openTx(id){const j=S.je.find(x=>x.id===id);if(!j)return;const f=cur,v=docOf(j.ref);if(v){const k=v.no.startsWith('INV')?'inv':v.no.startsWith('BILL')?'bill':'cash';go(k);E={k,i:v.no}}else{go('je');E={k:'je',i:id}}from=f;render();scrollTo(0,0)}
-function render(){if(CLOUD&&(!SESS||!S)){renderLogin();return}document.querySelector('details').style.display='';const cn=CO.list.find(c=>c.id===CO.cur)||{name:''};
- $('#nav').innerHTML=`<div class="co"><h1>Easy Books</h1><select aria-label="Company" onchange="useCo(this.value)">${CO.list.map(c=>`<option value="${esc(c.id)}"${c.id===CO.cur?' selected':''}>${esc(c.name)}</option>`).join('')}</select><input aria-label="Rename this company" value="${esc(cn.name)}" onchange="renameCo(this.value)"><div class="form"><input id="nc" placeholder="New company name"><button onclick="addCo()">Add</button></div></div>`+Object.keys(T).map(k=>`<a tabindex="0" class="${k===cur?'on':''}" onclick="go('${k}')" onkeydown="if(event.key==='Enter')go('${k}')">${T[k]}</a>`).join('')+'<p id="sync" style="font-size:12px;margin:14px 8px">'+syncMsg+'</p>'+LANGP+(CLOUD&&SESS?'<p style="margin:0 8px;font-size:12px"><a style="cursor:pointer;text-decoration:underline" onclick="logout()">Sign out ('+esc(SESS.email||'')+')</a>'+(canEdit()?'':' (view only)')+'</p>':'');
- $('#title').textContent=T[cur]+' \u2014 '+cn.name;$('#main').innerHTML=(from&&E?`<p><button class="g" onclick="cancel()">\u2190 Back to ${T[from]}</button></p>`:'')+V[cur]();
- $('#cl').innerHTML=S.con.map(c=>`<option value="${esc(c.name)}">`).join('');
- $('#pl').innerHTML=[...new Set(S.je.flatMap(j=>j.lines.map(l=>l.p).filter(Boolean)))].map(p=>`<option value="${esc(p)}">`).join('');if(!canEdit())viewOnly();if(LANG==='ms')trDom(document.body)}
-function saveDoc(kind){const D=DR,editing=E&&E.k===kind,o={party:D.party.trim(),date:D.date,due:D.due,pj:D.pj.trim(),memo:D.memo.trim(),lines:D.lines};run(()=>{if(editing){updateDoc((kind==='inv'?S.inv:S.bill).find(x=>x.no===E.i),kind,o);E=null;DR=null;if(from)go(from)}else{addDoc(kind,o);DR=null}},editing?'Changes saved':kind==='inv'?'Invoice saved':'Bill saved')}
-function savePanel(){run(()=>{const P=PANEL,v=docOf(P.no),a=cents(val('pa')),d=val('pd');if(!(a>0))throw new Error('Enter an amount above zero.');if(P.t==='cn')addCredit(v,P.kind,{date:d,d:val('px').trim(),amt:a,rate:P.kind==='inv'?parseFloat(val('pr')):0,acc:val('pc')});else addPay(v,P.kind,d,a,val('pb'),P.t);PANEL=null},'Saved')}
-function newItem(){run(()=>{reqd('n');S.itn=(S.itn||0)+1;S.items.push({id:S.itn,name:val('n').trim(),kind:val('t'),price:cents(val('a')),acc:val('ac'),rate:parseFloat(val('r')),cost:cents(val('cs')),bacc:val('ba')})},'Item saved')}
-function saveItem(id){run(()=>{reqd('n');Object.assign(S.items.find(x=>x.id===id),{name:val('n').trim(),kind:val('t'),price:cents(val('a')),acc:val('ac'),rate:parseFloat(val('r')),cost:cents(val('cs')),bacc:val('ba')});E=null},'Changes saved')}
-function saveSet(){run(()=>{Object.assign(S.co,{addr:val('ad').trim(),tel:val('tl').trim(),email:val('em2').trim(),tin:val('ti').trim(),sst:val('ss').trim(),bene:val('bf').trim(),bankn:val('bk2').trim(),acct:val('ac2').trim(),note:val('nt').trim()});S.lock=val('lk')},'Settings saved')}
-function newJE(){run(()=>{reqd('x','a');if(val('dr')===val('cr'))throw new Error('Choose two different accounts.');const a=cents(val('a'));post(val('d'),val('x').trim(),[{a:val('dr'),d:a},{a:val('cr'),c:a}])},'Entry posted')}
-function saveJE(id){run(()=>{reqd('x','a');if(val('dr')===val('cr'))throw new Error('Choose two different accounts.');const j=S.je.find(x=>x.id===id),a=cents(val('a'));chkLock(j.date);chkLock(val('d'));if(!a)throw new Error('Enter an amount above zero.');j.date=val('d');j.memo=val('x').trim();j.lines=[{a:val('dr'),d:a},{a:val('cr'),c:a}];E=null;if(from)go(from)},'Changes saved')}
-function newCon(){run(()=>{reqd('n');contact(val('n').trim(),val('t'));const x=S.con.find(c=>c.name===val('n').trim()&&c.t===val('t'));x.tel=val('tel').trim();x.mail=val('m').trim();x.tin=val('tin').trim()},'Contact saved')}
-function saveCon(i){run(()=>{reqd('n');const x=S.con[i],nm=val('n').trim();S.inv.forEach(v=>{if(x.t==='c'&&v.cust===x.name)v.cust=nm});S.bill.forEach(v=>{if(x.t==='v'&&v.ven===x.name)v.ven=nm});Object.assign(x,{name:nm,t:val('t'),tel:val('tel').trim(),mail:val('m').trim(),tin:val('tin').trim()});E=null},'Changes saved')}
-function newAcc(){run(()=>{reqd('k','n');if(S.acc.some(a=>a.code===val('k').trim()))throw new Error('That code already exists.');S.acc.push({code:val('k').trim(),name:val('n').trim(),type:val('t')})},'Account added')}
-function saveAcc(code){run(()=>{reqd('n');const a=S.acc.find(x=>x.code===code);a.name=val('n').trim();a.type=val('t');E=null},'Changes saved')}
-function resetData(blank,b){if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='Click again to erase everything';return}seed(blank);save();audit(blank?'Company reset to blank':'Sample data loaded','');render();toast(blank?'Blank company ready':'Sample data loaded')}
-function del(kind,k,b){
- if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='Confirm delete';setTimeout(()=>{b.dataset.s='';b.textContent='Delete'},3000);return}
- run(()=>{E=null;const rj=ids=>{S.je.filter(j=>ids.includes(j.id)).forEach(j=>chkLock(j.date));S.je=S.je.filter(j=>!ids.includes(j.id));S.bank.forEach(x=>{if(ids.includes(x.je))x.je=null})},drop=v=>{rj(S.je.filter(j=>j.ref===v.no).map(j=>j.id));const L=listOf(v.no);L.splice(L.indexOf(v),1)};
-  if(kind==='inv'||kind==='bill'||kind==='cash')drop(S[kind][k]);
-  else if(kind==='je'){const j=S.je.find(x=>x.id===k),v=docOf(j.ref);if(v&&isPay(j)){rj([k]);v.pay=(v.pay||[]).filter(p=>p.id!==k);syncDoc(v)}else if(v)drop(v);else rj([k])}
-  else if(kind==='con')S.con.splice(k,1);
-  else if(kind==='items')S.items=S.items.filter(x=>x.id!==k);
-  else if(kind==='bank')S.bank.splice(k,1);
-  else{if(S.je.some(j=>j.lines.some(l=>l.a===k)))throw new Error('This account has entries. Delete or move them first.');S.acc=S.acc.filter(a=>a.code!==k)}},'Deleted')}
-function parseCsv(t){return t.trim().split(/\r?\n/).map(r=>{const o=[];let c='',q=0;for(const ch of r){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c=''}else c+=ch}o.push(c);return o.map(x=>x.trim())})}
-function parseDate(s){s=(s||'').trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})/);if(m)return `${m[3].length==2?'20'+m[3]:m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;return ''}
-function readFile(el){const f=el.files[0];if(f)f.text().then(t=>{$('#csv').value=t;toast('File loaded. Check it, then click Import rows.')})}
-function importCsv(){run(()=>{const R=parseCsv(val('csv'));if(R.length<2)throw new Error('Add a header row and at least one transaction.');const h=R[0].map(x=>x.toLowerCase()),ix=re=>h.findIndex(x=>re.test(x)),di=ix(/date/),ni=ix(/desc|detail|narr|particular|memo|ref/),ai=ix(/amount|amt/),dr=ix(/debit|withdraw/),cr=ix(/credit|deposit/);if(di<0||ni<0||(ai<0&&dr<0&&cr<0))throw new Error('First row must name Date, Description and Amount (or Debit and Credit) columns.');const num=x=>parseFloat(String(x||'').replace(/[^0-9.\-]/g,''))||0;let add=0,skip=0;R.slice(1).forEach(r=>{const d=parseDate(r[di]),c=cents(ai>=0?num(r[ai]):num(r[cr])-num(r[dr]));if(!d||!c)return;if(S.bank.some(b=>b.date===d&&b.desc===r[ni]&&b.amt===c)){skip++;return}S.bn=S.bn||1;S.bank.push({id:S.bn++,date:d,desc:r[ni],amt:c,je:null});add++});if(!add)throw new Error(skip?'Those rows were already imported.':'No valid rows found. Check the date and amount columns.');$('#csv').value=''},'Imported')}
-function matchBank(id){run(()=>{S.bank.find(x=>x.id===id).je=+val('m'+id)},'Matched')}
-function payBank(id,no){run(()=>{const b=S.bank.find(x=>x.id===id),v=docOf(no);addPay(v,no.startsWith('INV')?'inv':'bill',b.date,Math.abs(b.amt),'1000','pay');b.je=S.n-1},'Matched and recorded')}
-function recBank(id){run(()=>{const b=S.bank.find(x=>x.id===id),a=val('a'+id),m=Math.abs(b.amt);post(b.date,b.desc,b.amt>0?[{a:'1000',d:m},{a:a,c:m}]:[{a:a,d:m},{a:'1000',c:m}]);b.je=S.n-1},'Recorded in your books')}
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting-to-Go</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#000000',
+                        darkcard: '#121212',
+                        darkborder: '#27272a'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-darkbg text-white font-sans min-h-screen">
+    <div id="app" class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="flex flex-col sm:flex-row justify-between items-center mb-8 border-b border-darkborder pb-4 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-wide">Accounting-to-Go</h1>
+                <p class="text-sm text-gray-400">Black Theme &bull; Universal Search &bull; Supabase Connected</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button onclick="switchTab('dashboard')" id="btn-dashboard" class="px-4 py-2 bg-zinc-800 text-white rounded shadow hover:bg-zinc-700 transition border border-darkborder">Dashboard</button>
+                <button onclick="switchTab('transactions')" id="btn-transactions" class="px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder">Transactions / Ledger</button>
+                <button onclick="switchTab('reconciliation')" id="btn-reconciliation" class="px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder">Bank Reconciliation</button>
+            </div>
+        </header>
 
-function restoreBak(){const b=rd('adbooks.bak.'+CO.cur);if(b){S=fix(b);save();render();toast('Earlier copy restored')}}
-const mny=c=>(c<0?'-':'')+(Math.abs(c)/100).toLocaleString('en-MY',{minimumFractionDigits:2,maximumFractionDigits:2});
-function pdfData(k){
- const acct=t=>S.acc.filter(a=>a.type===t).map(a=>[a.code+' '+a.name,mny(nat(a))]),inc=sum('income'),exp=sum('expense'),ai=acct('income').length,ae=acct('expense').length;
- if(k==='pl'){const[f,t]=range(),D=plData(f,t),pc=v=>D.ti?(v/D.ti*100).toFixed(1)+'%':'-',rw=L=>L.map(r=>[r.a.code+' '+r.a.name,mny(r.v),pc(r.v)]),body=[],bold=[],add=(r,b)=>{if(b)bold.push(body.length);body.push(r)};
-  add(['INCOME','',''],1);rw(D.inc).forEach(r=>add(r));add(['Total income',mny(D.ti),pc(D.ti)],1);if(D.cos.length){add(['COST OF SALES','',''],1);rw(D.cos).forEach(r=>add(r));add(['Total cost of sales',mny(D.tc),pc(D.tc)],1)}add(['GROSS PROFIT',mny(D.gp),pc(D.gp)],1);add(['OPERATING EXPENSES','',''],1);rw(D.op).forEach(r=>add(r));add(['Total operating expenses',mny(D.to),pc(D.to)],1);add(['NET PROFIT',mny(D.np),pc(D.np)],1);
-  return{title:'Profit and Loss',file:'profit-and-loss',sub:(LANG==='ms'?'Tempoh: ':'Period: ')+(f>'0001'?f:'start')+' to '+(t<'9999'?t:'today'),tables:[{chart:{b:buckets(f,t)}},{head:['Profit and Loss','RM','% of income'],body,right:[1,2],bold}]}}
- if(k==='bs')return{title:'Balance Sheet',file:'balance-sheet',tables:[{head:['Assets','RM'],body:acct('asset').concat([['Total assets',mny(sum('asset'))]]),right:[1],bold:[acct('asset').length]},{head:['Liabilities and equity','RM'],body:acct('liability').concat(acct('equity'),[['Current year profit',mny(inc-exp)],['Total liabilities and equity',mny(sum('liability')+sum('equity')+inc-exp)]]),right:[1],bold:[acct('liability').length+acct('equity').length+1]}]};
- if(k==='tb'){let d=0,c=0;const b=S.acc.map(a=>{const x=net(a.code);if(x>0)d+=x;else c-=x;return[a.code+' '+a.name,x>0?mny(x):'',x<0?mny(-x):'']});return{title:'Trial Balance',file:'trial-balance',tables:[{head:['Account','Debit','Credit'],body:b.concat([['Total',mny(d),mny(c)]]),right:[1,2],bold:[b.length]}]}}
- if(k==='je')return{title:'Journal',file:'journal',tables:S.je.length?[{head:['#','Date','Memo','Account','Debit','Credit'],body:S.je.slice().sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id).flatMap(j=>j.lines.map((l,i)=>[i?'':j.id,i?'':j.date,i?'':j.memo,l.a+' '+S.acc.find(a=>a.code===l.a).name,l.d?mny(l.d):'',l.c?mny(l.c):''])),right:[4,5]}]:[]};
- if(k==='gl'){const A=G.a?S.acc.filter(a=>a.code===G.a):S.acc,tabs=[];A.forEach(a=>{let bal=0;const s=['asset','expense'].includes(a.type)?1:-1,rows=S.je.flatMap(j=>j.lines.filter(l=>l.a===a.code).map(l=>({j,l}))).sort((x,y)=>x.j.date.localeCompare(y.j.date)||x.j.id-y.j.id).map(({j,l})=>{bal+=((l.d||0)-(l.c||0))*s;return[j,l,bal]}).filter(([j])=>(!G.f||j.date>=G.f)&&(!G.t||j.date<=G.t));if(rows.length)tabs.push({title:a.code+' '+a.name,head:['Date','Entry','Description','Ref','Debit','Credit','Balance'],body:rows.map(([j,l,b])=>[j.date,'#'+j.id,j.memo,j.ref,l.d?mny(l.d):'',l.c?mny(l.c):'',mny(b)]),right:[4,5,6]})});return{title:'General Ledger',sub:(G.a?'Account '+G.a:'All accounts')+(G.f||G.t?', '+(G.f||'start')+' to '+(G.t||'today'):''),file:'general-ledger',tables:tabs}}
- if(k==='cash')return{title:'Receipts and Expenses',file:'receipts-expenses',tables:S.cash.length?[{head:['No.','Type','Date','Name','Description','Amount (RM)'],body:S.cash.map(v=>[v.no,CK[v.type],v.date,v.who,v.desc,mny(v.tot||v.amt)]),right:[5]}]:[]};
- if(k==='ar'||k==='ap'){const d=AG||today(),A=aging(k==='ar'?'inv':'bill',d),body=A.L.map(r=>[r.n].concat(r.a.map(x=>x?mny(x):''),[mny(r.t)])).concat([['Total'].concat(A.tot.map(mny),[mny(A.all)])]);return{title:k==='ar'?'Accounts Receivable Aging':'Accounts Payable Aging',file:k==='ar'?'ar-aging':'ap-aging',sub:'As of '+d,tables:A.L.length?[{head:[k==='ar'?'Customer':'Vendor'].concat(AGH,['Total']),body,right:[1,2,3,4,5,6],bold:[body.length-1]}]:[]}}
- return{title:k==='inv'?'Invoices':'Bills',file:k==='inv'?'invoices':'bills',tables:S[k].length?[{head:['No.','Name','Issued','Due','Total','Balance','Status'],body:S[k].map(v=>[v.no,v.cust||v.ven,v.date,v.due||v.date,mny(v.tot),mny(bal(v)),bal(v)===0?'Paid':bal(v)<0?'Credit':v.pay.length?'Part paid':'Open']),right:[4,5]}]:[]}}
-function pdfBlob(pages,img){const o=['<< /Type /Catalog /Pages 2 0 R >>',null,'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>','<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>'],kids=[];let xo='';
- if(img){o.push({head:`<< /Type /XObject /Subtype /Image /Width ${img.w} /Height ${img.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.bytes.length} >>`,bin:img.bytes});xo=` /XObject << /Im1 ${o.length} 0 R >>`}
- pages.forEach(c=>{const n=o.length+1;kids.push(n+' 0 R');o.push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >>${xo} >> /Contents ${n+1} 0 R >>`);o.push(`<< /Length ${c.length} >>\nstream\n${c}\nendstream`)});
- o[1]=`<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.length} >>`;
- const parts=[];let len=0;const add=x=>{parts.push(x);len+=x.length};add('%PDF-1.4\n');const off=[];
- o.forEach((s,i)=>{off.push(len);if(typeof s==='string')add(`${i+1} 0 obj\n${s}\nendobj\n`);else{add(`${i+1} 0 obj\n${s.head}\nstream\n`);add(s.bin);add('\nendstream\nendobj\n')}});
- const x=len;add(`xref\n0 ${o.length+1}\n0000000000 65535 f \n`+off.map(f=>String(f).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size ${o.length+1} /Root 1 0 R >>\nstartxref\n${x}\n%%EOF`);return new Blob(parts,{type:'application/pdf'})}
-const pdfE=s=>String(s==null?'':s).replace(/[^\x20-\x7E]/g,'?').replace(/[\\()]/g,'\\$&');
-const pdfTw=(s,z,b)=>[...String(s)].reduce((a,c)=>a+(/[0-9]/.test(c)?.556:/[.,:;' ]/.test(c)?.278:c==='-'?.333:/[A-Z]/.test(c)?.68:/[ilfjt]/.test(c)?.28:/[mw]/.test(c)?.8:.52),0)*z*(b?1.07:1);
-function makeInvoicePdf(v){const W=595,H=842,M=40,UW=W-2*M,co=S.co||{},nm=(CO.list.find(c=>c.id===CO.cur)||{}).name||'',pages=[];let cur,y,img=null;
- const np=()=>{cur=[];pages.push(cur);y=H-M},T=(x,yy,s,z,b,al)=>{s=String(s==null?'':s);const w=pdfTw(s,z,b),xx=al==='c'?(W-w)/2:al==='r'?x-w:x;cur.push(`BT /${b?'F2':'F1'} ${z} Tf ${xx.toFixed(1)} ${yy.toFixed(1)} Td (${pdfE(s)}) Tj ET`)},
- wrap=(s,w,z)=>{const out=[];String(s==null?'':s).split('\n').forEach(par=>{let line='';par.split(' ').forEach(wd=>{const t=line?line+' '+wd:wd;if(pdfTw(t,z)>w&&line){out.push(line);line=wd}else line=t});out.push(line)});return out},
- line=(yy,g)=>cur.push(`${g||0.8} G 0.6 w ${M} ${yy.toFixed(1)} m ${W-M} ${yy.toFixed(1)} l S 0 G`);
- if(co.logo){try{const b=atob(co.logo.split(',')[1]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);img={w:co.lw,h:co.lh,bytes:u}}catch(e){img=null}}
- np();
- if(img){const sc=Math.min(60/img.h,200/img.w),dw=img.w*sc,dh=img.h*sc;y-=dh;cur.push(`q ${dw.toFixed(1)} 0 0 ${dh.toFixed(1)} ${((W-dw)/2).toFixed(1)} ${y.toFixed(1)} cm /Im1 Do Q`);y-=24}else y-=10;
- T(0,y,co.name||nm,15,1,'c');y-=16;
- [...String(co.addr||'').split('\n').filter(Boolean),[co.tel&&'Tel: '+co.tel,co.email].filter(Boolean).join('   |   '),[co.tin&&'TIN: '+co.tin,co.sst&&'SST Reg. No.: '+co.sst].filter(Boolean).join('   |   ')].filter(Boolean).forEach(s=>{T(0,y,s,9,0,'c');y-=12});
- y-=4;line(y);y-=24;
- const ct=S.con.find(c=>c.name===v.cust)||{};let yl=y,yr=y;
- T(M,yl,'BILL TO',8,1);yl-=14;T(M,yl,v.cust,11,1);yl-=14;[ct.tin&&'TIN: '+ct.tin,ct.tel,ct.mail,v.pj&&'Project: '+v.pj,v.memo&&'Note: '+v.memo].filter(Boolean).forEach(s=>{wrap(s,260,9).forEach(w=>{T(M,yl,w,9);yl-=12})});
- T(W-M,yr,'INVOICE',20,1,'r');yr-=20;T(W-M,yr,'No.: '+v.no,11,1,'r');yr-=15;T(W-M,yr,'Date: '+v.date,9,0,'r');yr-=12;T(W-M,yr,'Due: '+(v.due||v.date),9,0,'r');yr-=12;
- y=Math.min(yl,yr)-16;
- const hdr=()=>{cur.push(`0.9 g ${M} ${y-5} ${UW} 17 re f 0 g`);T(M+4,y,'Description',9,1);T(M+300,y,'Qty',9,1,'r');T(M+390,y,'Price',9,1,'r');T(M+445,y,'SST',9,1,'r');T(W-M-4,y,'Amount (RM)',9,1,'r');y-=20};
- hdr();
- v.lines.forEach(l=>{const ws=wrap(l.d||'',245,9),h=ws.length*12+6;if(y<M+h+30){np();hdr()}T(M+4,y,ws[0],9);T(M+300,y,String(l.q),9,0,'r');T(M+390,y,mny(l.p),9,0,'r');T(M+445,y,l.rate?Math.round(l.rate*100)+'%':'',9,0,'r');T(W-M-4,y,mny(l.amt),9,0,'r');ws.slice(1).forEach((w,k)=>T(M+4,y-12*(k+1),w,9));y-=h-2;line(y+6,0.88);y-=8});
- const tot=[['Subtotal',mny(v.amt)]].concat(v.tax?[['SST',mny(v.tax)]]:[],[['TOTAL',mny(v.tot)]]);const nb=tot.length-1;
- (v.pay||[]).forEach(p=>tot.push([(p.k==='credit'?'Credit note '+p.cn:p.k==='refund'?'Refund':'Payment received')+'  '+p.date,mny(-p.amt)]));tot.push(['BALANCE DUE',mny(bal(v))]);
- if(y<M+tot.length*16+20)np();y-=6;
- tot.forEach((r,k)=>{const b=k===nb||k===tot.length-1;if(k===tot.length-1){cur.push(`0.9 g ${W-M-250} ${y-5} 250 17 re f 0 g`)}T(W-M-246,y,r[0],9,b);T(W-M-4,y,r[1],9,b,'r');y-=16});
- const note=String(co.note||'').split('\n').filter(Boolean),F=[];note.forEach(s=>wrap(s,UW,9).forEach(w=>F.push({s:w,z:9})));if(F.length)F.push({s:'',z:5});
- F.push({s:'THANK YOU FOR YOUR SUPPORT',z:10,b:1},{s:'Payments can be made by cash, cheque, or online transfer to the account below :',z:9},{s:'Beneficiary Name : '+(co.bene||co.name||nm),z:9,b:1});if(co.bankn)F.push({s:'Bank Name : '+co.bankn,z:9});F.push({s:'Bank Account No : '+(co.acct||''),z:9,b:1});
- const fh=F.reduce((s,f)=>s+f.z+4,0)+10;if(y<M+fh+10)np();let fy=M+fh;line(fy+6);F.forEach(f=>{T(M,fy-4,f.s,f.z,f.b);fy-=f.z+4});
- const n=pages.length;return pdfBlob(pages.map((c,i)=>c.concat([`BT /F1 8 Tf ${W-M-50} 22 Td (Page ${i+1} of ${n}) Tj ET`]).join('\n')),img)}
-function showPreview(blob,name,title){closePreview();PVBLOB=blob;PVNAME=name;PVURL=URL.createObjectURL(blob);const d=document.createElement('div');d.id='pv';d.style.cssText='position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(0,0,0,.65);z-index:50;display:flex;padding:12px';
- d.innerHTML=`<div style="background:var(--panel);color:var(--ink);border-radius:8px;display:flex;flex-direction:column;flex:1;min-height:0;max-width:920px;margin:0 auto;overflow:hidden"><div class="form" style="padding:10px 12px;align-items:center;border-bottom:1px solid var(--line)"><b style="flex:1;min-width:140px">${esc(title)} - ${tr('Preview')}</b><button onclick="dlPreview()">${tr('Download')}</button><a href="${PVURL}" target="_blank" rel="noopener" style="color:var(--acc)">${tr('Open in new tab')}</a><button class="g" onclick="closePreview()">${tr('Close')}</button></div><iframe src="${PVURL}" title="PDF preview" style="flex:1;border:0;width:100%;background:#fff"></iframe><div class="k" style="padding:6px 12px">${tr('If the preview is blank on your phone, use Open in new tab.')}</div></div>`;document.body.appendChild(d)}
-function dlPreview(){dl(PVNAME,PVBLOB);toast('PDF downloaded')}
-function closePreview(){const d=document.getElementById('pv');if(d)d.remove();if(PVURL){URL.revokeObjectURL(PVURL);PVURL=null}}
-function uploadLogo(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,500/im.width,200/im.height),w=Math.max(1,Math.round(im.width*s)),h=Math.max(1,Math.round(im.height*s)),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);run(()=>{S.co.logo=c.toDataURL('image/jpeg',.85);S.co.lw=w;S.co.lh=h},'Logo saved')};im.onerror=()=>toast('Could not read that image.');im.src=r.result};r.readAsDataURL(f)}
-function snap(){try{const k='adbooks.snap.'+CO.cur,a=rd(k)||[],now=Date.now();if(a.length&&now-a[0].t<6*36e5)return;a.unshift({t:now,data:S});wr(k,a.slice(0,4))}catch(e){}}
-function restoreSnap(i,b){if(b.dataset.s!=='1'){b.dataset.s='1';b.textContent='Click again to restore';return}run(()=>{const a=rd('adbooks.snap.'+CO.cur)||[];if(!a[i])throw new Error('That copy is no longer available.');S=fix(clone(a[i].data))},'Safety copy restored')}
-function makePdf(R){const W=595,H=842,M=40,UW=W-2*M,pages=[],cn=(CO.list.find(c=>c.id===CO.cur)||{}).name||'';let cur,y;
- const np=()=>{cur=[];pages.push(cur);y=H-M},E=s=>String(s==null?'':s).replace(/[^\x20-\x7E]/g,'?').replace(/[\\()]/g,'\\$&'),
- tw=(s,z)=>[...s].reduce((a,c)=>a+(/[0-9]/.test(c)?.556:/[.,:;' ]/.test(c)?.278:c==='-'?.333:/[A-Z]/.test(c)?.68:/[ilfjt]/.test(c)?.28:/[mw]/.test(c)?.8:.52),0)*z,
- T=(x,yy,s,z,b)=>cur.push(`BT /${b?'F2':'F1'} ${z} Tf ${x.toFixed(1)} ${yy.toFixed(1)} Td (${E(s)}) Tj ET`),
- fit=(s,w,z)=>{s=String(s==null?'':s);while(s.length>1&&tw(s,z)>w)s=s.slice(0,-1);return s};
- const drawChart=B=>{if(!B.some(x=>x.i||x.e))return;const ph=100;if(y<M+ph+90)np();T(M,y,tr('Income vs expenses'),11,1);y-=16;const top=y,mx=Math.max(1,...B.flatMap(x=>[x.i,x.e])),pw=Math.pow(10,Math.floor(Math.log10(mx))),nice=Math.ceil(mx/pw)*pw,x0=M+34,bw=(UW-34)/B.length,step=Math.ceil(B.length/12);
-  for(let i=0;i<=4;i++){const yy=top-ph+ph*i/4;cur.push(`0.85 G 0.5 w ${x0} ${yy} m ${M+UW} ${yy} l S 0 G`);T(M,yy-3,short(nice*i/4),7)}
-  B.forEach((b,i)=>{const x=x0+i*bw,w=Math.max(2,bw*.36);cur.push(`0.055 0.42 0.42 rg ${x+bw*.12} ${top-ph} ${w} ${Math.max(0,b.i)/nice*ph} re f`,`0.7 0.15 0.12 rg ${x+bw*.12+w+1} ${top-ph} ${w} ${Math.max(0,b.e)/nice*ph} re f 0 g`);if(i%step===0)T(x,top-ph-10,b.lab,7)});
-  y=top-ph-26;cur.push(`0.055 0.42 0.42 rg ${M} ${y-1} 8 8 re f 0 g`);T(M+12,y,tr('Income'),8);cur.push(`0.7 0.15 0.12 rg ${M+70} ${y-1} 8 8 re f 0 g`);T(M+82,y,tr('Expenses'),8);y-=20};
- np();T(M,y-6,tr(R.title),16,1);y-=24;T(M,y,cn+(R.sub?' | '+R.sub:'')+' | Printed '+today(),9);y-=22;
- R.tables.forEach(t=>{if(t.lines){t.lines.forEach(s=>{const o=typeof s==='string'?{x:s}:s;if(y<M+20)np();T(M,y,tr(o.x),o.z||9,o.b);y-=(o.z||9)+4});y-=6;return}if(t.chart){drawChart(t.chart.b);return}if(t.title){if(y<M+60)np();T(M,y,t.title,11,1);y-=16}
-  const wt=(t.head||t.body[0]).map((h,i)=>Math.min(34,Math.max(6,String(h).length,...t.body.map(r=>String(r[i]==null?'':r[i]).length)))),sw=wt.reduce((a,b)=>a+b,0),cw=wt.map(w=>w/sw*UW);
-  const row=(r,b,hd)=>{if(y<M+30)np();if(hd)cur.push(`0.9 g ${M} ${y-4} ${UW} 15 re f 0 g`);let x=M;r.forEach((s,i)=>{const f=fit(tr(String(s==null?'':s)),cw[i]-8,9);T((t.right||[]).includes(i)?x+cw[i]-4-tw(f,9):x+3,y,f,9,b||hd);x+=cw[i]});if(!hd)cur.push(`0.85 G 0.5 w ${M} ${y-4} m ${M+UW} ${y-4} l S 0 G`);y-=15};
-  if(t.head)row(t.head,1,1);t.body.forEach((r,i)=>row(r,t.bold&&t.bold.includes(i)));y-=10});
- return pdfBlob(pages.map((c,i)=>c.concat([`BT /F1 8 Tf ${W-M-50} 22 Td (Page ${i+1} of ${pages.length}) Tj ET`]).join('\n')))}
-function dl(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
-function backup(){dl('easybooks-'+CO.cur+'-'+today()+'.json',new Blob([JSON.stringify(S)],{type:'application/json'}));toast('Backup downloaded')}
-function restoreFile(el){const f=el.files[0];if(f)f.text().then(x=>{try{const d=JSON.parse(x);if(!d.acc||!d.je)throw 0;S=fix(d);save();render();toast('Backup restored')}catch(e){toast('That file is not an Easy Books backup.')}})}
-function exportPdf(k){try{let blob,name,title;if(k.startsWith('doc:')){const no=k.slice(4);if(no.startsWith('INV')){blob=makeInvoicePdf(docOf(no));name=no+'.pdf';title='Invoice '+no}else{const R=docPdfData(no);blob=makePdf(R);name=no+'.pdf';title=R.title}}else{const R=pdfData(k);if(!R.tables.length)throw new Error('Nothing to export yet.');blob=makePdf(R);name=R.file+'-'+today()+'.pdf';title=R.title}showPreview(blob,name,tr(title))}catch(e){toast('Could not create the PDF: '+(e.message||e))}}
-function loadCo(){const d=rd(lk(CO.cur));if(d)S=fix(d);else{seed(true);wr(lk(CO.cur),S)}}
-async function useCo(id){E=null;from=null;cur='dash';CO.cur=id;try{localStorage.setItem('adbooks.cur',id)}catch(e){}try{if(CLOUD)await loadBook();else loadCo();snap()}catch(e){toast('Could not open that company: '+e.message)}render()}
-async function addCo(){const n=val('nc').trim();if(!n)return toast('Type the new company name first.');const id='c'+Date.now().toString(36);try{if(CLOUD)await api('/rest/v1/books',{method:'POST',body:JSON.stringify({id,name:n,data:blankData(),version:1})});CO.list.push({id,name:n});if(!CLOUD)wr('adbooks.cos',CO.list);await useCo(id);audit('Company created',n);toast(n+' created')}catch(e){toast('Could not create the company: '+e.message)}}
-function renameCo(v){const c=CO.list.find(x=>x.id===CO.cur);if(!c||!v.trim())return;c.name=v.trim();if(CLOUD)api('/rest/v1/books?id=eq.'+enc(CO.cur),{method:'PATCH',body:JSON.stringify({name:c.name})}).catch(()=>toast('Could not rename on the server.'));else wr('adbooks.cos',CO.list);render()}
-async function delCo(){const c=CO.list.find(x=>x.id===CO.cur);if(!c)return;if(CO.list.length<2)return toast('You need at least one company. Add another one first, or use Start blank company.');
- const a=prompt('This permanently deletes "'+c.name+'" and all its records for everyone.\nA backup file will download first.\n\nType the company name to confirm:');if(a===null)return;if(a.trim()!==c.name)return toast('The name did not match, so nothing was deleted.');
- try{backup();if(CLOUD){const r=await api('/rest/v1/books?id=eq.'+enc(c.id),{method:'DELETE',headers:{Prefer:'return=representation'}});if(!r.length)throw new Error('The server refused the delete. Run the new "delete" line from setup.sql in Supabase first.')}
-  CO.list=CO.list.filter(x=>x.id!==c.id);if(!CLOUD){wr('adbooks.cos',CO.list);try{localStorage.removeItem(lk(c.id))}catch(e){}}await useCo(CO.list[0].id);audit('Company deleted',c.name);toast('"'+c.name+'" was deleted. Its backup file was downloaded.')}catch(e){toast(e.message)}}
-function cashLines(v){const L=v.type==='exp'?[{a:v.acc,d:v.amt,p:v.pj},{a:v.bank,c:v.amt}]:[{a:v.bank,d:v.tot||v.amt},{a:v.acc,c:v.amt,p:v.pj}];if(v.tax)L.push({a:'2100',c:v.tax});return L}
-function newCash(){run(()=>{reqd('x','a');const amt=cents(val('a'));if(!amt)throw new Error('Enter an amount above zero.');const type=CT,no=nextNo(CP[type],S.cash.filter(x=>x.type===type)),tax=type==='sr'?Math.round(amt*parseFloat(val('r'))):0,v={no,type,date:val('d'),who:val('c').trim(),desc:val('x').trim(),amt,tax,tot:amt+tax,acc:val('ac'),bank:val('bk'),pj:val('j').trim()};post(v.date,no+' '+(v.who||v.desc),cashLines(v),no);if(v.who&&type==='sr')contact(v.who,'c');S.cash.push(v)},'Saved')}
-function saveCash(no){run(()=>{reqd('x','a');const v=S.cash.find(x=>x.no===no),amt=cents(val('a'));chkLock(v.date);chkLock(val('d'));if(!amt)throw new Error('Enter an amount above zero.');const tax=v.type==='sr'?Math.round(amt*parseFloat(val('r'))):0;Object.assign(v,{date:val('d'),who:val('c').trim(),desc:val('x').trim(),amt,tax,tot:amt+tax,acc:val('ac'),bank:val('bk'),pj:val('j').trim()});const m=mainJE(v);m.date=v.date;m.memo=no+' '+(v.who||v.desc);m.lines=cashLines(v);E=null;if(from)go(from)},'Changes saved')}
-function saveBank(id){run(()=>{reqd('x','a');const b=S.bank.find(x=>x.id===id),a=cents(val('a'));if(!a)throw new Error('Enter an amount above zero.');b.date=val('d');b.desc=val('x').trim();b.amt=a;E=null},'Changes saved')}
-async function loadRole(){try{const r=await api('/rest/v1/members?select=role&email=eq.'+enc(SESS.email.toLowerCase()));ROLE=r.length&&r[0].role==='editor'?'editor':'viewer'}catch(e){ROLE='editor'}}
-async function loadHist(){try{const r=await api('/rest/v1/audit?select=at,who,company,action,detail&order=at.desc&limit=200'),nm=id=>(CO.list.find(c=>c.id===id)||{name:id||''}).name,h=$('#hist');if(h){h.innerHTML='<table><tr><th>When</th><th>Who</th><th>Company</th><th>What</th></tr>'+(r.map(x=>`<tr><td>${esc(new Date(x.at).toLocaleString())}</td><td>${esc(x.who)}</td><td>${esc(nm(x.company))}</td><td>${esc(x.action)}${x.detail?'<div class="k">'+esc(x.detail)+'</div>':''}</td></tr>`).join('')||'<tr><td colspan=4>No history yet.</td></tr>')+'</table>';if(LANG==='ms')trDom(h)}}catch(e){const h=$('#hist');if(h)h.textContent='Could not load history. Run upgrade-2.sql in Supabase first. ('+e.message+')'}}
-function viewOnly(){const m=$('#main');m.querySelectorAll('button:not(.keep)').forEach(b=>b.style.display='none');m.querySelectorAll('input[type=file],textarea,.eo,table input,table select').forEach(x=>x.style.display='none');m.querySelectorAll('.form').forEach(f=>{if(f.querySelector('[id]'))f.style.display='none'});document.querySelectorAll('details,#nav .co input,#nav .co .form').forEach(x=>x.style.display='none')}
-const LANGP='<p style="font-size:12px;margin:0 8px 6px"><a style="cursor:pointer;text-decoration:underline" onclick="setLang(\'en\')">English</a> | <a style="cursor:pointer;text-decoration:underline" onclick="setLang(\'ms\')">Bahasa Melayu</a></p>';
-function setLang(l){LANG=l;wr('adbooks.lang',l);document.documentElement.lang=l==='ms'?'ms':'en';render()}
-const MS={'Dashboard':'Papan Pemuka','Invoices':'Invois','Bills':'Bil','Receipts & expenses':'Resit & perbelanjaan','Bank':'Bank','Customers & vendors':'Pelanggan & pembekal','Projects':'Projek','General ledger':'Lejar Am','Journal':'Jurnal','Chart of accounts':'Carta akaun','Reports':'Laporan','History':'Sejarah','+ New':'+ Baharu','Invoice':'Invois','Bill':'Bil','Journal entry':'Catatan jurnal','Sales receipt':'Resit jualan','Bank deposit':'Deposit bank','Expense':'Perbelanjaan',
-'Create invoice':'Buat invois','Enter bill':'Masukkan bil','Import bank statement':'Import penyata bank','Save':'Simpan','Save invoice':'Simpan invois','Save bill':'Simpan bil','Save changes':'Simpan perubahan','Cancel':'Batal','Edit':'Edit','Delete':'Padam','Confirm delete':'Sahkan padam','Receive payment':'Terima bayaran','Pay bill':'Bayar bil','Download PDF':'Muat turun PDF','Download backup':'Muat turun sandaran','Restore backup':'Pulihkan sandaran','Delete this company':'Padam syarikat ini','Start blank company':'Mulakan syarikat kosong','Load sample data':'Muat data contoh','Add':'Tambah','Clear':'Kosongkan','Import rows':'Import baris','Match':'Padan','Record':'Rekod','Post entry':'Pos catatan','Add account':'Tambah akaun','Save contact':'Simpan kenalan','Sign in':'Log masuk','Try again':'Cuba lagi',
-'Cash at bank':'Tunai di bank','Owed to you':'Perlu dibayar kepada anda','You owe':'Anda berhutang','Profit so far':'Untung setakat ini','Recent activity':'Aktiviti terkini','(click one to open it)':'(klik untuk membuka)','Date':'Tarikh','Description':'Keterangan','Amount':'Jumlah','Data':'Data','Customer':'Pelanggan','Vendor':'Pembekal','Issued':'Dikeluarkan','Due':'Tarikh akhir','Project (optional)':'Projek (pilihan)','SST':'SST','None':'Tiada','Amount (RM)':'Jumlah (RM)','Paid on':'Dibayar pada','Expense account':'Akaun perbelanjaan','Name':'Nama','Type':'Jenis','Phone':'Telefon','Email':'E-mel','TIN / SST no.':'No. TIN / SST','Outstanding':'Tertunggak','Status':'Status','No.':'No.','Overdue':'Lewat tempoh','Matched':'Dipadan','Memo':'Memo','Debit account':'Akaun debit','Credit account':'Akaun kredit','Debit':'Debit','Credit':'Kredit','Account':'Akaun','Balance':'Baki','Code':'Kod','Asset':'Aset','Liability':'Liabiliti','Equity':'Ekuiti','Income':'Pendapatan','Expenses':'Perbelanjaan',
-'Customer (optional)':'Pelanggan (pilihan)','Received from (optional)':'Diterima daripada (pilihan)','Paid to (optional)':'Dibayar kepada (pilihan)','Income account':'Akaun pendapatan','Deposit to':'Deposit ke','Paid from':'Dibayar daripada','Nothing here yet. Use the form above.':'Belum ada apa-apa. Gunakan borang di atas.','No contacts yet. They are added automatically when you save an invoice or bill.':'Belum ada kenalan. Ia ditambah secara automatik apabila anda menyimpan invois atau bil.','No projects tracked yet.':'Belum ada projek.','Add a project name when saving an invoice or bill and it appears here.':'Tambah nama projek semasa menyimpan invois atau bil dan ia akan dipaparkan di sini.','Project':'Projek','Costs':'Kos','Profit':'Untung','Margin':'Margin',
-'Profit and loss':'Untung dan rugi','Balance sheet':'Kunci kira-kira','Trial balance':'Kunci kira-kira percubaan','Total income':'Jumlah pendapatan','Total expenses':'Jumlah perbelanjaan','Net profit':'Untung bersih','Assets':'Aset','Total assets':'Jumlah aset','Liabilities':'Liabiliti','Equity ':'Ekuiti','Total liabilities and equity':'Jumlah liabiliti dan ekuiti','Current year profit':'Untung tahun semasa','Profit and Loss':'Untung dan Rugi','Balance Sheet':'Kunci Kira-kira','Trial Balance':'Kunci Kira-kira Percubaan','General Ledger':'Lejar Am','Receipts and Expenses':'Resit dan Perbelanjaan','NET PROFIT':'UNTUNG BERSIH','Liabilities and equity':'Liabiliti dan ekuiti','Total':'Jumlah',
-'Every transaction, account by account, with a running balance. Click any line to open and edit the original entry.':'Setiap transaksi mengikut akaun, dengan baki berjalan. Klik mana-mana baris untuk membuka dan mengedit catatan asal.','All accounts':'Semua akaun','From':'Dari','To':'Hingga','Entry':'Catatan','Ref':'Rujukan','Payment':'Bayaran','No transactions yet.':'Belum ada transaksi.','No transactions in this period.':'Tiada transaksi dalam tempoh ini.',
-"Choose your bank's CSV file, or paste its rows below. The first row must name a Date column, a Description column, and either Amount (money out as negative) or Debit and Credit columns. Rows already imported are skipped.":'Pilih fail CSV bank anda, atau tampal barisnya di bawah. Baris pertama mesti menamakan lajur Date, Description, dan sama ada Amount (wang keluar bernilai negatif) atau lajur Debit dan Credit. Baris yang telah diimport akan dilangkau.','Left to review':'Belum disemak','Statement total':'Jumlah penyata','Cash in your books':'Tunai dalam buku anda','Statement lines':'Baris penyata','Reconcile':'Padankan','Nothing imported yet.':'Belum ada yang diimport.','Editing statement line':'Mengedit baris penyata',
-'Journal entries':'Catatan jurnal','Editing account':'Mengedit akaun','Editing contact':'Mengedit kenalan','Customer ':'Pelanggan','When':'Bila','Who':'Siapa','Company':'Syarikat','What':'Apa','Data ':'Data','Start fresh whenever you like. This erases everything in this company for everyone using it.':'Mulakan semula bila-bila masa. Ini memadam semua data syarikat ini untuk semua pengguna.','The latest 200 changes, newest first.':'200 perubahan terkini, yang terbaharu dahulu.','Loading...':'Memuatkan...','No history yet.':'Belum ada sejarah.','New company name':'Nama syarikat baharu','Company name':'Nama syarikat','Email ':'E-mel','Password':'Kata laluan','Accounts are created by the administrator.':'Akaun dicipta oleh pentadbir.','Sign in ':'Log masuk',
-'Invoice saved':'Invois disimpan','Bill saved':'Bil disimpan','Saved':'Disimpan','Changes saved':'Perubahan disimpan','Payment recorded':'Bayaran direkodkan','Entry posted':'Catatan dipos','Contact saved':'Kenalan disimpan','Account added':'Akaun ditambah','Deleted':'Dipadam','Imported':'Diimport','Matched':'Dipadan','Recorded in your books':'Direkodkan dalam buku anda','Please fill in every field.':'Sila isi semua ruangan.','Enter an amount above zero.':'Masukkan jumlah melebihi sifar.','Debits and credits must be equal and above zero.':'Debit dan kredit mesti sama dan melebihi sifar.','Choose two different accounts.':'Pilih dua akaun yang berbeza.','PDF downloaded':'PDF dimuat turun','Backup downloaded':'Sandaran dimuat turun','Backup restored':'Sandaran dipulihkan','Nothing to export yet.':'Belum ada apa-apa untuk dieksport.','That code already exists.':'Kod itu sudah wujud.','Type the new company name first.':'Taip nama syarikat baharu dahulu.','Could not save to the server.':'Tidak dapat menyimpan ke pelayan.'};
-Object.assign(MS,{'Preview':'Pratonton','Download':'Muat turun','Open in new tab':'Buka dalam tab baharu','Close':'Tutup','If the preview is blank on your phone, use Open in new tab.':'Jika pratonton kosong pada telefon anda, gunakan Buka dalam tab baharu.','Safety copies on this device':'Salinan keselamatan pada peranti ini','Restore':'Pulihkan','Saved':'Disimpan','Contents':'Kandungan','Beneficiary name':'Nama benefisiari','Bank name (optional)':'Nama bank (pilihan)','Bank account no.':'No. akaun bank','Payment details (printed at the bottom of invoices)':'Butiran pembayaran (dicetak di bahagian bawah invois)','Company logo (JPG or PNG)':'Logo syarikat (JPG atau PNG)','Remove logo':'Buang logo','Logo saved':'Logo disimpan','Logo removed':'Logo dibuang','Products & services':'Produk & perkhidmatan','Settings':'Tetapan','Item':'Item','Qty':'Kuantiti','Price':'Harga','Line total':'Jumlah baris','Add line':'Tambah baris','Total ':'Jumlah','Balance due':'Baki perlu dibayar','Part paid':'Dibayar sebahagian','Open':'Terbuka','Credit note':'Nota kredit','Vendor credit':'Kredit pembekal','Refund':'Bayaran balik','Note (optional)':'Nota (pilihan)','Reason':'Sebab','Service':'Perkhidmatan','Product':'Produk','Save item':'Simpan item','Save settings':'Simpan tetapan','Settings saved':'Tetapan disimpan','Item saved':'Item disimpan','Selling price (RM)':'Harga jualan (RM)','Buying cost (RM, optional)':'Kos belian (RM, pilihan)','Expense account (optional)':'Akaun perbelanjaan (pilihan)','Accounts receivable aging':'Penuaan akaun belum terima','Accounts payable aging':'Penuaan akaun belum bayar','As of':'Setakat','Current':'Semasa','1-30 days':'1-30 hari','31-60 days':'31-60 hari','61-90 days':'61-90 hari','Over 90 days':'Lebih 90 hari','Nothing outstanding.':'Tiada tertunggak.','Payments and credits':'Bayaran dan kredit','Receive payment ':'Terima bayaran','Subtotal':'Jumlah kecil','TOTAL':'JUMLAH','BALANCE DUE':'BAKI PERLU DIBAYAR','Company details (printed on invoice PDFs)':'Maklumat syarikat (dicetak pada PDF invois)','Lock the books':'Kunci buku','Address':'Alamat','Deposit to ':'Deposit ke','This month':'Bulan ini','Last month':'Bulan lepas','This quarter':'Suku tahun ini','Last quarter':'Suku tahun lepas','This year':'Tahun ini','Last year':'Tahun lepas','Last 12 months':'12 bulan lepas','All time':'Sepanjang masa','Custom range':'Julat tersuai','Period':'Tempoh','% of income':'% daripada pendapatan','Gross profit':'Untung kasar','Cost of sales':'Kos jualan','Total cost of sales':'Jumlah kos jualan','Operating expenses':'Perbelanjaan operasi','Total operating expenses':'Jumlah perbelanjaan operasi','Income vs expenses':'Pendapatan lawan perbelanjaan','INCOME':'PENDAPATAN','COST OF SALES':'KOS JUALAN','OPERATING EXPENSES':'PERBELANJAAN OPERASI','GROSS PROFIT':'UNTUNG KASAR','start':'mula','today':'hari ini','No income or expenses in this period.':'Tiada pendapatan atau perbelanjaan dalam tempoh ini.','Cash at Bank':'Tunai di Bank','Accounts Receivable':'Akaun Belum Terima','Inventory':'Inventori','Machinery & Equipment':'Jentera & Peralatan','Equipment':'Peralatan','Accounts Payable':'Akaun Belum Bayar','SST Payable':'SST Kena Bayar','Owner Equity':'Ekuiti Pemilik','Sales':'Jualan','Other Income':'Pendapatan Lain','Cost of Sales':'Kos Jualan','Salaries':'Gaji','Rent':'Sewa','Utilities':'Utiliti','Office Supplies':'Bekalan Pejabat','Marketing':'Pemasaran','Professional Fees':'Yuran Profesional','Bank Charges':'Caj Bank','Travel':'Perjalanan','Asset':'Aset','Liability':'Liabiliti'});
-const PAT=[[/^(\d{4}) (.+)$/,(m,a,b)=>a+' '+(MS[b]||tr0(b))],[/^Editing (.+)$/,(m,a)=>'Mengedit '+a],[/^Income (RM .+)$/,(m,a)=>'Pendapatan '+a],[/^Expenses (RM .+)$/,(m,a)=>'Perbelanjaan '+a],[/^Paid (\d{4}-.+)$/,(m,a)=>'Dibayar '+a],[/^Sign out \((.*)\)(.*)$/,(m,a,b)=>'Log keluar ('+a+')'+(b?' (lihat sahaja)':'')],[/^\u2190 Back to (.+)$/,(m,a)=>'\u2190 Kembali ke '+tr0(a)],[/^(.+) \u2014 (.+)$/,(m,a,b)=>tr0(a)+' \u2014 '+b],[/^Receive payment for (.+)$/,(m,a)=>'Terima bayaran untuk '+a],[/^Pay (BILL-.+)$/,(m,a)=>'Bayar '+a],[/^Total \((.+)\)$/,(m,a)=>'Jumlah ('+(a==='balanced'?'seimbang':'TIDAK seimbang')+')'],[/^Click again to erase everything$/,()=>'Klik sekali lagi untuk memadam semuanya'],[/^(.+) incl\. SST$/,(m,a)=>a+' termasuk SST']];
-PAT.push([/^Gross margin (.+)$/,(m,a)=>'Margin kasar '+a],[/^Net margin (.+)$/,(m,a)=>'Margin bersih '+a],[/^(\S+) to (\S+)$/,(m,a,b)=>tr0(a)+' hingga '+tr0(b)]);
-PAT.push([/^INVOICE (.+)$/,(m,a)=>'INVOIS '+a],[/^BILL (.+)$/,(m,a)=>'BIL '+a],[/^Credit (RM .+)$/,(m,a)=>'Kredit '+a]);
-const tr0=s=>MS[s]||s;
-function tr(s){if(LANG!=='ms'||!s||typeof s!=='string')return s;const k=s.trim();if(MS[k])return s.replace(k,MS[k]);for(const[re,f]of PAT){const m=k.match(re);if(m)return s.replace(k,f(...m))}return s}
-function trDom(root){const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),L=[];let n;while(n=w.nextNode())L.push(n);L.forEach(n=>{const v=n.nodeValue;if(v.trim()){const r=tr(v);if(r!==v)n.nodeValue=r}});root.querySelectorAll('[placeholder],[aria-label],[title]').forEach(e=>['placeholder','aria-label','title'].forEach(a=>{if(e.hasAttribute(a)){const v=e.getAttribute(a),r=tr(v);if(r!==v)e.setAttribute(a,r)}}))}
-const PR={p:'thisyear',f:'',t:''},PN={thismonth:'This month',lastmonth:'Last month',thisq:'This quarter',lastq:'Last quarter',thisyear:'This year',lastyear:'Last year',last12:'Last 12 months',all:'All time',custom:'Custom range'},MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const iso=d=>d.toISOString().slice(0,10),short=c=>{const v=c/100;return v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(v%1e3?1:0)+'k':String(Math.round(v))};
-function range(){const n=new Date(today()+'T00:00:00Z'),y=n.getUTCFullYear(),m=n.getUTCMonth(),q=Math.floor(m/3),d=(a,b,c)=>iso(new Date(Date.UTC(a,b,c)));
- if(PR.p==='all'){const e=[today(),...S.je.map(j=>j.date)].sort().at(-1);return[S.je.map(j=>j.date).sort()[0]||today(),e]}
- if(PR.p==='custom')return[PR.f||'0001-01-01',PR.t||'9999-12-31'];
- return{thismonth:[d(y,m,1),d(y,m+1,0)],lastmonth:[d(y,m-1,1),d(y,m,0)],thisq:[d(y,q*3,1),d(y,q*3+3,0)],lastq:[d(y,q*3-3,1),d(y,q*3,0)],thisyear:[d(y,0,1),d(y,11,31)],lastyear:[d(y-1,0,1),d(y-1,11,31)],last12:[d(y,m-11,1),d(y,m+1,0)]}[PR.p]}
-function plData(f,t){const amt=a=>{let x=0;S.je.forEach(j=>{if(j.date>=f&&j.date<=t)j.lines.forEach(l=>{if(l.a===a.code)x+=(l.d||0)-(l.c||0)})});return a.type==='income'?-x:x},rows=ty=>S.acc.filter(a=>a.type===ty).map(a=>({a,v:amt(a)})).filter(r=>r.v!==0),inc=rows('income'),ex=rows('expense'),cos=ex.filter(r=>r.a.code[0]==='5'),op=ex.filter(r=>r.a.code[0]!=='5'),sm=L=>L.reduce((s,r)=>s+r.v,0),ti=sm(inc),tc=sm(cos),to=sm(op);return{inc,cos,op,ti,tc,to,gp:ti-tc,np:ti-tc-to}}
-function buckets(f,t){const ms=864e5,a=new Date(f+'T00:00:00Z'),b=new Date(t+'T00:00:00Z'),days=Math.round((b-a)/ms)+1,mode=days<=45?'w':days<=800?'m':'y',B=[];
- if(mode==='w'){for(let x=a.getTime();x<=b.getTime();x+=7*ms){const s=iso(new Date(x));B.push({k:s,lab:s.slice(8)+'/'+s.slice(5,7),i:0,e:0})}}
- else if(mode==='m'){let y=a.getUTCFullYear(),m=a.getUTCMonth();while(y<b.getUTCFullYear()||(y===b.getUTCFullYear()&&m<=b.getUTCMonth())){B.push({k:y+'-'+String(m+1).padStart(2,'0'),lab:MON[m]+' '+String(y).slice(2),i:0,e:0});if(++m>11){m=0;y++}}}
- else for(let y=a.getUTCFullYear();y<=b.getUTCFullYear();y++)B.push({k:String(y),lab:String(y),i:0,e:0});
- const idx=d=>{if(mode==='w')return Math.floor((new Date(d+'T00:00:00Z')-a)/ms/7);const k=mode==='m'?d.slice(0,7):d.slice(0,4);return B.findIndex(x=>x.k===k)};
- S.je.forEach(j=>{if(j.date<f||j.date>t)return;const o=B[idx(j.date)];if(!o)return;j.lines.forEach(l=>{const ac=S.acc.find(x=>x.code===l.a);if(!ac)return;if(ac.type==='income')o.i+=(l.c||0)-(l.d||0);else if(ac.type==='expense')o.e+=(l.d||0)-(l.c||0)})});return B}
-function chartSvg(B){if(!B.some(b=>b.i||b.e))return'<p class="k">No income or expenses in this period.</p>';const W=640,H=230,L=48,Bm=28,T0=10,mx=Math.max(1,...B.flatMap(b=>[b.i,b.e])),pw=Math.pow(10,Math.floor(Math.log10(mx))),nice=Math.ceil(mx/pw)*pw,ph=H-Bm-T0,bw=(W-L-10)/B.length,y=v=>T0+ph-Math.max(0,v)/nice*ph,step=Math.ceil(B.length/12);
- let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:760px" role="img" aria-label="Income and expenses by period">`;
- for(let i=0;i<=4;i++){const yy=y(nice*i/4);s+=`<line x1="${L}" x2="${W-10}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-6}" y="${yy+4}" text-anchor="end" font-size="10" fill="var(--mute)">${short(nice*i/4)}</text>`}
- B.forEach((b,i)=>{const x=L+i*bw,w=Math.max(2,bw*.36),n=b.i-b.e;s+=`<rect x="${x+bw*.12}" y="${y(b.i)}" width="${w}" height="${T0+ph-y(b.i)}" fill="var(--acc)"><title>${esc(b.lab)}: Income ${rm(b.i)}, Expenses ${rm(b.e)}, Net ${rm(n)}</title></rect><rect x="${x+bw*.12+w+1}" y="${y(b.e)}" width="${w}" height="${T0+ph-y(b.e)}" fill="var(--neg)"><title>${esc(b.lab)}: Income ${rm(b.i)}, Expenses ${rm(b.e)}, Net ${rm(n)}</title></rect>`;if(i%step===0)s+=`<text x="${x+bw*.45}" y="${H-10}" text-anchor="middle" font-size="10" fill="var(--mute)">${esc(b.lab)}</text>`});
- return s+'</svg>'}
-function plHtml(){const[f,t]=range(),D=plData(f,t),pc=v=>D.ti?(v/D.ti*100).toFixed(1)+'%':'-',hd=n=>`<tr><th>${n}</th><th class="n">RM</th><th class="n">% of income</th></tr>`,r1=r=>`<tr><td>${esc(r.a.code+' '+r.a.name)}</td><td class="n">${rm(r.v)}</td><td class="n">${pc(r.v)}</td></tr>`,t1=(n,v)=>`<tr class="sub"><td>${n}</td><td class="n">${rm(v)}</td><td class="n">${pc(v)}</td></tr>`;
- return `<h3>Profit and loss ${PB('pl')}</h3><div class="form" style="margin-bottom:10px"><label>Period<select onchange="PR.p=this.value;render()">${Object.keys(PN).map(k=>`<option value="${k}"${k===PR.p?' selected':''}>${PN[k]}</option>`).join('')}</select></label>${PR.p==='custom'?`<label>From<input type="date" value="${PR.f}" onchange="PR.f=this.value;render()"></label><label>To<input type="date" value="${PR.t}" onchange="PR.t=this.value;render()"></label>`:''}<span class="k">${f>'0001'?f:'start'} to ${t<'9999'?t:'today'}</span></div>
- <div class="grid"><div class="card"><div class="k">Income</div><div class="v">${rm(D.ti)}</div></div><div class="card"><div class="k">Gross profit</div><div class="v">${rm(D.gp)}</div><div class="k">Gross margin ${pc(D.gp)}</div></div><div class="card"><div class="k">Net profit</div><div class="v ${D.np<0?'neg':''}">${rm(D.np)}</div><div class="k">Net margin ${pc(D.np)}</div></div></div>
- <div class="box"><div class="k" style="margin-bottom:6px"><b>Income vs expenses</b> &nbsp; <span style="color:var(--acc)">&#9632;</span> Income &nbsp; <span style="color:var(--neg)">&#9632;</span> Expenses</div>${chartSvg(buckets(f,t))}</div>
- <div class="box wrap"><table>${hd('Income')}${D.inc.map(r1).join('')}${t1('Total income',D.ti)}${D.cos.length?hd('Cost of sales')+D.cos.map(r1).join('')+t1('Total cost of sales',D.tc):''}${t1('Gross profit',D.gp)}${hd('Operating expenses')}${D.op.map(r1).join('')}${t1('Total operating expenses',D.to)}${t1('Net profit',D.np)}</table></div>`}
-function renderLogin(){document.querySelector('details').style.display='none';$('#nav').innerHTML='<div class="co"><h1>Easy Books</h1></div><p id="sync" style="font-size:12px;margin:14px 8px">'+esc(syncMsg)+'</p>';$('#title').textContent='Sign in';$('#main').innerHTML=SESS?'<p class="k">Loading your books...</p>':'<div class="box" style="max-width:380px"><div class="form" style="flex-direction:column;align-items:stretch"><label>Email<input id="em" type="email" autocomplete="username"></label><label>Password<input id="pw" type="password" autocomplete="current-password"></label><button onclick="login()">Sign in</button></div><p class="k">Accounts are created by the administrator.</p></div>'}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closePreview();if(e.key==='Enter'&&e.target.matches('.form input:not([type=file])')){const b=e.target.closest('.form').querySelector('button');if(b)b.click()}});
-if(CLOUD){render();if(SESS)startCloud()}else{CO.list=rd('adbooks.cos')||[];if(!CO.list.length)CO.list=[{id:'main',name:'My company'}];try{CO.cur=localStorage.getItem('adbooks.cur')}catch(e){}if(!CO.list.some(c=>c.id===CO.cur))CO.cur=CO.list[0].id;loadCo();snap();render()}
-</script></body></html>
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                    <h3 class="text-gray-400 text-sm font-medium">Total Revenue</h3>
+                    <p id="total-revenue" class="text-2xl font-bold text-emerald-400">RM 0.00</p>
+                </div>
+                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                    <h3 class="text-gray-400 text-sm font-medium">Total Expenses</h3>
+                    <p id="total-expenses" class="text-2xl font-bold text-rose-400">RM 0.00</p>
+                </div>
+                <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                    <h3 class="text-gray-400 text-sm font-medium">Net Profit</h3>
+                    <p id="net-profit" class="text-2xl font-bold text-indigo-400">RM 0.00</p>
+                </div>
+            </div>
+            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                <h3 class="text-lg font-semibold mb-2 text-white">Quick Overview</h3>
+                <p class="text-gray-400 mb-4">Navigate to Transactions / Ledger to search records or Bank Reconciliation to upload statements.</p>
+                <button onclick="switchTab('transactions')" class="px-4 py-2 bg-white text-black font-medium rounded hover:bg-gray-200 transition">View Transactions & Ledger</button>
+            </div>
+        </div>
+
+        <!-- Transactions / Ledger Tab -->
+        <div id="tab-transactions" class="hidden space-y-6">
+            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                <h3 class="text-lg font-semibold mb-4 text-white">Add New Transaction</h3>
+                <form id="tx-form" onsubmit="addTransaction(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <input type="date" id="tx-date" required class="bg-black border border-darkborder p-2 rounded text-white">
+                    <input type="text" id="tx-desc" placeholder="Description / Particulars" required class="bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500">
+                    <input type="number" step="0.01" id="tx-amount" placeholder="Amount (RM)" required class="bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500">
+                    <select id="tx-type" class="bg-black border border-darkborder p-2 rounded text-white">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <button type="submit" class="sm:col-span-4 bg-white text-black font-semibold py-2 rounded hover:bg-gray-200 transition">Save Transaction</button>
+                </form>
+            </div>
+
+            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                    <h3 class="text-lg font-semibold text-white">Transaction Ledger & Journal</h3>
+                    <div class="w-full sm:w-72">
+                        <input type="text" id="ledger-search" oninput="filterTransactions()" placeholder="Search description, date, amount..." class="w-full bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500 text-sm">
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-darkborder bg-zinc-900 text-gray-400 text-xs uppercase">
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Description</th>
+                                <th class="p-3">Amount</th>
+                                <th class="p-3">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tx-tbody" class="divide-y divide-darkborder text-sm">
+                            <tr><td colspan="4" class="p-4 text-center text-gray-500">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bank Reconciliation Tab -->
+        <div id="tab-reconciliation" class="hidden space-y-6">
+            <div class="bg-darkcard p-6 rounded-lg shadow border border-darkborder">
+                <h3 class="text-lg font-semibold mb-2 text-white">Bank Statement Reconciliation</h3>
+                <p class="text-sm text-gray-400 mb-4">Upload your bank statement (CSV format with Date, Description, Amount) to reconcile transactions against your ledger.</p>
+                <div class="border-2 border-dashed border-darkborder p-6 rounded-lg text-center bg-black">
+                    <input type="file" id="bank-csv-file" accept=".csv" class="mb-4 block mx-auto text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-zinc-800 file:text-white hover:file:bg-zinc-700">
+                    <button onclick="processBankStatement()" class="px-6 py-2 bg-white text-black font-semibold rounded hover:bg-gray-200 transition">Analyze & Reconcile Statement</button>
+                </div>
+            </div>
+            <div id="reconciliation-results" class="bg-darkcard p-6 rounded-lg shadow border border-darkborder hidden space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <h3 class="text-lg font-semibold text-white">Reconciliation Results</h3>
+                    <div class="w-full sm:w-72">
+                        <input type="text" id="recon-search" oninput="filterReconciliation()" placeholder="Search reconciliation results..." class="w-full bg-black border border-darkborder p-2 rounded text-white placeholder-gray-500 text-sm">
+                    </div>
+                </div>
+                <div id="recon-summary" class="text-sm text-gray-300"></div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-darkborder bg-zinc-900 text-gray-400 text-xs uppercase">
+                                <th class="p-3">Date</th>
+                                <th class="p-3">Statement Description</th>
+                                <th class="p-3">Amount</th>
+                                <th class="p-3">Match Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recon-tbody" class="divide-y divide-darkborder text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let transactions = [];
+        let reconRows = [];
+
+        function switchTab(tabName) {
+            ['dashboard', 'transactions', 'reconciliation'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('btn-' + t).className = 'px-4 py-2 bg-zinc-900 text-gray-300 rounded shadow hover:bg-zinc-800 transition border border-darkborder';
+            });
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.getElementById('btn-' + tabName).className = 'px-4 py-2 bg-zinc-800 text-white rounded shadow hover:bg-zinc-700 transition border border-darkborder';
+            if(tabName === 'transactions' || tabName === 'dashboard') loadTransactions();
+        }
+
+        async function loadTransactions() {
+            const { data, error } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+            if (error) {
+                console.error('Error loading transactions:', error);
+                return;
+            }
+            transactions = data || [];
+            renderTransactions(transactions);
+            updateDashboard();
+        }
+
+        function renderTransactions(dataToRender) {
+            const tbody = document.getElementById('tx-tbody');
+            if (dataToRender.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No matching transactions found.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = dataToRender.map(tx => `
+                <tr class="hover:bg-zinc-900/50 transition">
+                    <td class="p-3 text-gray-300">${tx.date}</td>
+                    <td class="p-3 text-white font-medium">${tx.description}</td>
+                    <td class="p-3 font-semibold ${tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">RM ${parseFloat(tx.amount).toFixed(2)}</td>
+                    <td class="p-3"><span class="uppercase text-xs font-semibold px-2 py-1 rounded ${tx.type === 'income' ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-rose-950 text-rose-300 border border-rose-800'}">${tx.type}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        function filterTransactions() {
+            const query = document.getElementById('ledger-search').value.toLowerCase();
+            const filtered = transactions.filter(tx => 
+                tx.description.toLowerCase().includes(query) ||
+                tx.date.toLowerCase().includes(query) ||
+                tx.amount.toString().includes(query) ||
+                tx.type.toLowerCase().includes(query)
+            );
+            renderTransactions(filtered);
+        }
+
+        function updateDashboard() {
+            let rev = 0, exp = 0;
+            transactions.forEach(tx => {
+                const amt = parseFloat(tx.amount) || 0;
+                if(tx.type === 'income') rev += amt;
+                else exp += amt;
+            });
+            document.getElementById('total-revenue').innerText = 'RM ' + rev.toFixed(2);
+            document.getElementById('total-expenses').innerText = 'RM ' + exp.toFixed(2);
+            document.getElementById('net-profit').innerText = 'RM ' + (rev - exp).toFixed(2);
+        }
+
+        async function addTransaction(e) {
+            e.preventDefault();
+            const date = document.getElementById('tx-date').value;
+            const description = document.getElementById('tx-desc').value;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const type = document.getElementById('tx-type').value;
+
+            const { error } = await supabaseClient.from('transactions').insert([{ date, description, amount, type }]);
+            if (error) {
+                alert('Error saving transaction: ' + error.message);
+            } else {
+                document.getElementById('tx-form').reset();
+                loadTransactions();
+                alert('Transaction saved successfully!');
+            }
+        }
+
+        function processBankStatement() {
+            const fileInput = document.getElementById('bank-csv-file');
+            if (!fileInput.files.length) {
+                alert('Please select a CSV bank statement file first.');
+                return;
+            }
+            Papa.parse(fileInput.files[0], {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    reconRows = results.data;
+                    document.getElementById('reconciliation-results').classList.remove('hidden');
+                    renderReconciliation(reconRows);
+                }
+            });
+        }
+
+        function renderReconciliation(rows) {
+            const reconTbody = document.getElementById('recon-tbody');
+            let matchedCount = 0;
+
+            if (rows.length === 0) {
+                reconTbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-500">No matching statement rows found.</td></tr>';
+                document.getElementById('recon-summary').innerText = 'No matching rows found.';
+                return;
+            }
+
+            reconTbody.innerHTML = rows.map(row => {
+                const rDate = row.Date || row.date || '';
+                const rDesc = row.Description || row.description || '';
+                const rAmount = parseFloat(row.Amount || row.amount || 0);
+                
+                const found = transactions.find(tx => Math.abs(parseFloat(tx.amount) - Math.abs(rAmount)) < 0.01);
+                if(found) matchedCount++;
+
+                return `
+                    <tr class="hover:bg-zinc-900/50 transition">
+                        <td class="p-3 text-gray-300">${rDate}</td>
+                        <td class="p-3 text-white font-medium">${rDesc}</td>
+                        <td class="p-3 text-gray-200">RM ${rAmount.toFixed(2)}</td>
+                        <td class="p-3">
+                            ${found ? '<span class="bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-1 rounded text-xs font-semibold">Matched</span>' : '<span class="bg-amber-950 text-amber-300 border border-amber-800 px-2 py-1 rounded text-xs font-semibold">Unmatched (New)</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('recon-summary').innerText = `Processed statement rows. Successfully matched ${matchedCount} of ${rows.length} rows with existing ledger transactions.`;
+        }
+
+        function filterReconciliation() {
+            const query = document.getElementById('recon-search').value.toLowerCase();
+            const filtered = reconRows.filter(row => {
+                const rDate = (row.Date || row.date || '').toLowerCase();
+                const rDesc = (row.Description || row.description || '').toLowerCase();
+                const rAmount = (row.Amount || row.amount || '').toString();
+                return rDate.includes(query) || rDesc.includes(query) || rAmount.includes(query);
+            });
+            renderReconciliation(filtered);
+        }
+
+        loadTransactions();
+    </script>
+</body>
+</html>

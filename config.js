@@ -1,5 +1,3 @@
-// Settings for the shared (multi-user) mode.
-window.EASYBOOKS_CONFIG = {
-  url: "https://jdlvnqqywoypqifplvsq.supabase.co",
-  key: "sb_publishable_ARMkkoQCFsoQFaBuyVNHng_IZiedwWE"   // publishable key: safe to be public
-};
+// Supabase Configuration
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
