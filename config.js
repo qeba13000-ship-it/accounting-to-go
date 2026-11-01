@@ -1,5 +1,2 @@
-// Supabase Configuration
-const EASYBOOKS_CONFIG = {
-  url: '',
-  key: ''
-};
+// Config
+const EASYBOOKS_CONFIG={url:"",key:""};
